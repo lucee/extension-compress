@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.zip.ZipEntry;
 
 import org.lucee.extension.zip.ZipParamAbstr;
 import org.lucee.extension.zip.ZipParamContent;
@@ -39,22 +40,23 @@ import org.lucee.extension.zip.filter.FileResourceFilter;
 import org.lucee.extension.zip.filter.OrResourceFilter;
 import org.lucee.extension.zip.filter.UDFFilter;
 import org.lucee.extension.zip.filter.WildcardPatternFilter;
-import org.omg.CORBA.portable.ApplicationException;
 
 import lucee.commons.io.res.Resource;
 import lucee.commons.io.res.filter.ResourceFilter;
-import lucee.loader.engine.CFMLEngineFactory;
 import lucee.loader.util.Util;
 import lucee.runtime.exp.PageException;
 import lucee.runtime.type.Collection.Key;
 import lucee.runtime.type.UDF;
 import lucee.runtime.util.Creation;
 import lucee.runtime.util.IO;
-import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
 import net.lingala.zip4j.model.ZipParameters;
-import net.lingala.zip4j.util.Zip4jConstants;
+import net.lingala.zip4j.model.enums.AesKeyStrength;
+import net.lingala.zip4j.model.enums.CompressionLevel;
+import net.lingala.zip4j.model.enums.CompressionMethod;
+import net.lingala.zip4j.model.enums.EncryptionMethod;
 import net.lingala.zip4j.util.Zip4jUtil;
 
 public final class Zip extends BodyTagImpl {
@@ -80,10 +82,11 @@ public final class Zip extends BodyTagImpl {
 	private List<ZipParamAbstr> params;
 	private Set<String> alreadyUsed;
 	private Resource source;
-	private int compressionMethod = Zip4jConstants.COMP_DEFLATE;
-	private int encryption = Zip4jConstants.ENC_NO_ENCRYPTION;
-	private int aes = Zip4jConstants.AES_STRENGTH_256;
-	private int deflate = Zip4jConstants.DEFLATE_LEVEL_NORMAL;
+	private CompressionMethod compressionMethod = CompressionMethod.DEFLATE;
+	private EncryptionMethod encryption = EncryptionMethod.NONE;
+	private AesKeyStrength aes = AesKeyStrength.KEY_STRENGTH_256;
+	private CompressionLevel deflate = CompressionLevel.NORMAL;
+	private int elements;
 	private static int id = 0;
 
 	@Override
@@ -108,13 +111,14 @@ public final class Zip extends BodyTagImpl {
 		pattern = null;
 		patternDelimiters = null;
 		password = null;
-		compressionMethod = Zip4jConstants.COMP_DEFLATE;
-		aes = Zip4jConstants.AES_STRENGTH_256;
-		encryption = Zip4jConstants.ENC_NO_ENCRYPTION;
-		deflate = Zip4jConstants.DEFLATE_LEVEL_NORMAL;
+		compressionMethod = CompressionMethod.DEFLATE;
+		aes = AesKeyStrength.KEY_STRENGTH_256;
+		encryption = EncryptionMethod.NONE;
+		deflate = CompressionLevel.NORMAL;
 
 		if (params != null) params.clear();
 		if (alreadyUsed != null) alreadyUsed.clear();
+		elements = 0;
 	}
 
 	/**
@@ -253,27 +257,28 @@ public final class Zip extends BodyTagImpl {
 		compressionMethod = compressionMethod.trim();
 
 		if ("deflate".equalsIgnoreCase(compressionMethod) || "deflatenormal".equalsIgnoreCase(compressionMethod)) {
-			this.compressionMethod = Zip4jConstants.COMP_DEFLATE;
-			this.deflate = Zip4jConstants.DEFLATE_LEVEL_NORMAL;
+			this.compressionMethod = CompressionMethod.DEFLATE;
+			this.deflate = CompressionLevel.NORMAL;
 		}
 		else if ("deflateFast".equalsIgnoreCase(compressionMethod)) {
-			this.compressionMethod = Zip4jConstants.COMP_DEFLATE;
-			this.deflate = Zip4jConstants.DEFLATE_LEVEL_FAST;
+			this.compressionMethod = CompressionMethod.DEFLATE;
+			this.deflate = CompressionLevel.FAST;
 		}
 		else if ("deflateFastest".equalsIgnoreCase(compressionMethod)) {
-			this.compressionMethod = Zip4jConstants.COMP_DEFLATE;
-			this.deflate = Zip4jConstants.DEFLATE_LEVEL_FASTEST;
+			this.compressionMethod = CompressionMethod.DEFLATE;
+			this.deflate = CompressionLevel.FASTEST;
 		}
 		else if ("deflateMaximum".equalsIgnoreCase(compressionMethod)) {
-			this.compressionMethod = Zip4jConstants.COMP_DEFLATE;
-			this.deflate = Zip4jConstants.DEFLATE_LEVEL_MAXIMUM;
+			this.compressionMethod = CompressionMethod.DEFLATE;
+			this.deflate = CompressionLevel.MAXIMUM;
 		}
 		else if ("deflateUtra".equalsIgnoreCase(compressionMethod)) {
-			this.compressionMethod = Zip4jConstants.COMP_DEFLATE;
-			this.deflate = Zip4jConstants.DEFLATE_LEVEL_ULTRA;
+			this.compressionMethod = CompressionMethod.DEFLATE;
+			this.deflate = CompressionLevel.NORMAL;
 		}
-		else if ("aesenc".equalsIgnoreCase(compressionMethod)) this.compressionMethod = Zip4jConstants.COMP_AES_ENC;
-		else if ("store".equalsIgnoreCase(compressionMethod)) this.compressionMethod = Zip4jConstants.COMP_STORE;
+		else if ("aesenc".equalsIgnoreCase(compressionMethod)) this.compressionMethod = CompressionMethod.AES_INTERNAL_ONLY;
+		else if ("AESINTERNALONLY".equalsIgnoreCase(compressionMethod)) this.compressionMethod = CompressionMethod.AES_INTERNAL_ONLY;
+		else if ("store".equalsIgnoreCase(compressionMethod)) this.compressionMethod = CompressionMethod.STORE;
 		else throw engine.getExceptionUtil().createApplicationException("compression method [" + compressionMethod + "] is invalid,"
 				+ " valid values are [deflate(=deflateNormal),deflateFast,deflateFastest,deflateMaximum,deflateUtra,aesenc,store]");
 	}
@@ -283,21 +288,25 @@ public final class Zip extends BodyTagImpl {
 		encryption = encryption.trim();
 
 		if ("aes".equalsIgnoreCase(encryption) || "aes256".equalsIgnoreCase(encryption)) {
-			this.encryption = Zip4jConstants.ENC_METHOD_AES;
-			this.aes = Zip4jConstants.AES_STRENGTH_256;
+			this.encryption = EncryptionMethod.AES;
+			this.aes = AesKeyStrength.KEY_STRENGTH_256;
 		}
 		else if ("aes192".equalsIgnoreCase(encryption)) {
-			this.encryption = Zip4jConstants.ENC_METHOD_AES;
-			this.aes = Zip4jConstants.AES_STRENGTH_192;
+			this.encryption = EncryptionMethod.AES;
+			this.aes = AesKeyStrength.KEY_STRENGTH_192;
 		}
 		else if ("aes128".equalsIgnoreCase(encryption)) {
-			this.encryption = Zip4jConstants.ENC_METHOD_AES;
-			this.aes = Zip4jConstants.AES_STRENGTH_128;
+			this.encryption = EncryptionMethod.AES;
+			this.aes = AesKeyStrength.KEY_STRENGTH_128;
 		}
 		else if ("standard".equalsIgnoreCase(encryption)) {
-			this.encryption = Zip4jConstants.ENC_METHOD_STANDARD;
+			this.encryption = EncryptionMethod.ZIP_STANDARD;
 		}
-		else throw engine.getExceptionUtil().createApplicationException("encryption [" + encryption + "] is invalid," + " valid values are [aes(=aes256),aes128,standard]");
+		else if ("standardStrong".equalsIgnoreCase(encryption)) {
+			this.encryption = EncryptionMethod.ZIP_STANDARD_VARIANT_STRONG;
+		}
+		else throw engine.getExceptionUtil()
+				.createApplicationException("encryption [" + encryption + "] is invalid," + " valid values are [aes(=aes256),aes128,standard,standardStrong]");
 
 	}
 
@@ -371,6 +380,19 @@ public final class Zip extends BodyTagImpl {
 
 	}
 
+	public static File newFile(File destinationDir, ZipEntry zipEntry) throws IOException {
+		File destFile = new File(destinationDir, zipEntry.getName());
+
+		String destDirPath = destinationDir.getCanonicalPath();
+		String destFilePath = destFile.getCanonicalPath();
+
+		if (!destFilePath.startsWith(destDirPath + File.separator)) {
+			throw new IOException("Entry is outside of the target dir: " + zipEntry.getName());
+		}
+
+		return destFile;
+	}
+
 	private void actionList() throws PageException, IOException, ZipException {
 		required("file", file, true);
 		required("name", name);
@@ -409,8 +431,8 @@ public final class Zip extends BodyTagImpl {
 				query.setAt("name", row, path);
 				query.setAt("size", row, engine.getCastUtil().toDouble(fh.getUncompressedSize())); // TODO do better
 				query.setAt("type", row, fh.isDirectory() ? "Directory" : "File");
-				query.setAt("dateLastModified", row, engine.getCreationUtil().createDateTime(Zip4jUtil.dosToJavaTme(fh.getLastModFileTime())));
-				query.setAt("crc", row, engine.getCastUtil().toDouble(fh.getCrc32()));
+				query.setAt("dateLastModified", row, engine.getCreationUtil().createDateTime(Zip4jUtil.dosToJavaTme(fh.getLastModifiedTime())));
+				query.setAt("crc", row, engine.getCastUtil().toDouble(fh.getCrc()));
 				query.setAt("compressedSize", row, engine.getCastUtil().toDouble(fh.getCompressedSize()));
 				query.setAt("comment", row, fh.getFileComment());
 				query.setAt("directory", row, dir);
@@ -494,14 +516,12 @@ public final class Zip extends BodyTagImpl {
 			while (it.hasNext()) {
 				fh = it.next();
 				path = fh.getFileName().replace('\\', '/');
-
 				index = path.lastIndexOf('/');
 
 				// recurse
 				if (!recurse && index != -1) {
 					continue;
 				}
-
 				target = ZipUtil.toResource(destination, fh.getFileName());
 
 				if (target.exists() && overwrite) target.delete();
@@ -515,7 +535,9 @@ public final class Zip extends BodyTagImpl {
 				if (!entryPathMatch(path)) {
 					continue;
 				}
-				if (!storePath) target = destination.getRealResource(target.getName());
+				if (!storePath) {
+					target = destination.getRealResource(target.getName());
+				}
 				if (fh.isDirectory()) {
 					target.mkdirs();
 				}
@@ -526,10 +548,18 @@ public final class Zip extends BodyTagImpl {
 					}
 
 					if (overwrite || !target.exists()) {
+						/*
+						 * if (target instanceof File) { zip.extractFile(fh, ((File)
+						 * target).getParentFile().getAbsolutePath()); }else
+						 */
 						engine.getIOUtil().copy(zip.getInputStream(fh), target, true);
+
 					}
 				}
-				target.setLastModified(Zip4jUtil.dosToJavaTme(fh.getLastModFileTime()));
+				if (target instanceof File) {
+					((File) target).setExecutable(true);// TODO was is executable?
+				}
+				target.setLastModified(Zip4jUtil.dosToJavaTme(fh.getLastModifiedTime()));
 			}
 		}
 		finally {
@@ -564,14 +594,15 @@ public final class Zip extends BodyTagImpl {
 			}
 			file.delete();
 
-			ZipFile out = getZip(file, null);// password is only needed to read a zip
+			ZipFile out = getZip(file, password);// password is only needed to read a zip
 
 			Object[] arr = params.toArray();
 			for (int i = arr.length - 1; i >= 0; i--) {
-				if (arr[i] instanceof ZipParamSource) actionZip(out, (ZipParamSource) arr[i]);
+				if (arr[i] instanceof ZipParamSource) {
+					actionZip(out, (ZipParamSource) arr[i]);
+				}
 				else if (arr[i] instanceof ZipParamContent) actionZip(out, (ZipParamContent) arr[i]);
 			}
-
 			if (existing != null) {
 				ZipFile in = getZip(existing, password);
 				try {
@@ -579,7 +610,13 @@ public final class Zip extends BodyTagImpl {
 					FileHeader fh;
 					while (it.hasNext()) {
 						fh = it.next();
-						add(out, in.getInputStream(fh), fh.getFileName(), Zip4jUtil.dosToJavaTme(fh.getLastModFileTime()), true);
+						if (fh.isDirectory()) {
+							// createEmptyDirectory(out, dir, fh.getFileName(), null); TODO disabled for the moment, becuae it
+							// causes problems
+						}
+						else {
+							add(out, in.getInputStream(fh), fh.getFileName(), Zip4jUtil.dosToJavaTme(fh.getLastModifiedTime()), true, toZipParameters(fh));
+						}
 					}
 				}
 				finally {
@@ -587,14 +624,35 @@ public final class Zip extends BodyTagImpl {
 				}
 			}
 
-			if (!Util.isEmpty(password)) out.setPassword(password);
+			if (!Util.isEmpty(password)) out.setPassword(password.toCharArray());
+
+			if (elements == 0 && !out.isValidZipFile()) throw engine.getExceptionUtil().createApplicationException("cannot create an empty zip file");
+
+			// System.err.println(file + ":" + elements + ":" + out.isValidZipFile());
 		}
 		finally {
+
 			// ZipUtil.close(zos);
 			if (existing != null) existing.delete();
 
 		}
 
+	}
+
+	private ZipParameters toZipParameters(FileHeader fh) {
+		ZipParameters param = new ZipParameters();
+		/*
+		 * AESExtraDataRecord aes = fh.getAesExtraDataRecord(); if (aes != null) { if
+		 * (aes.getAesKeyStrength() != null) param.setAesKeyStrength(aes.getAesKeyStrength()); if
+		 * (aes.getAesVersion() != null) param.setAesVersion(aes.getAesVersion()); } if
+		 * (fh.getCompressionMethod() != null) param.setCompressionMethod(fh.getCompressionMethod()); if
+		 * (fh.getEncryptionMethod() != null) param.setEncryptionMethod(fh.getEncryptionMethod()); if
+		 * (fh.getCrc() > 0) param.setEntryCRC(fh.getCrc()); if (fh.getFileName() != null)
+		 * param.setFileNameInZip(fh.getFileName()); if (fh.getLastModifiedTime() > 0)
+		 * param.setLastModifiedFileTime(fh.getLastModifiedTime()); if (fh.getFileName() != null)
+		 * param.setFileNameInZip(fh.getFileName());
+		 */
+		return param;
 	}
 
 	private String getTempName() {
@@ -608,13 +666,13 @@ public final class Zip extends BodyTagImpl {
 	private void actionZip(ZipFile zip, ZipParamContent zpc) throws PageException, IOException, ZipException {
 		Object content = zpc.getContent();
 		if (engine.getDecisionUtil().isBinary(content)) {
-			add(zip, new ByteArrayInputStream(engine.getCastUtil().toBinary(content)), zpc.getEntryPath(), System.currentTimeMillis(), true);
+			add(zip, new ByteArrayInputStream(engine.getCastUtil().toBinary(content)), zpc.getEntryPath(), System.currentTimeMillis(), true, null);
 
 		}
 		else {
 			String charset = zpc.getCharset();
 			if (Util.isEmpty(charset)) charset = pageContext.getResourceCharset().name();
-			add(zip, new ByteArrayInputStream(content.toString().getBytes(charset)), zpc.getEntryPath(), System.currentTimeMillis(), true);
+			add(zip, new ByteArrayInputStream(content.toString().getBytes(charset)), zpc.getEntryPath(), System.currentTimeMillis(), true, null);
 		}
 	}
 
@@ -629,11 +687,10 @@ public final class Zip extends BodyTagImpl {
 		else prefix = "";
 
 		if (zps.getSource().isFile()) {
-
 			String ep = zps.getEntryPath();
 			if (ep == null) ep = zps.getSource().getName();
 			if (!Util.isEmpty(prefix)) ep = prefix + ep;
-			add(zip, zps.getSource().getInputStream(), ep, zps.getSource().lastModified(), true);
+			add(zip, zps.getSource(), ep, zps.getSource().lastModified());
 		}
 		else {
 			// filter
@@ -645,13 +702,8 @@ public final class Zip extends BodyTagImpl {
 			else {
 				if (f == null) f = FileResourceFilter.FILTER;
 			}
-
 			addDir(zip, zps.getSource(), prefix, f);
 		}
-	}
-
-	private File toFile(Resource res) {
-		return CFMLEngineFactory.getInstance().getCastUtil().toFile(res, null);
 	}
 
 	private void addDir(ZipFile zip, Resource dir, String parent, ResourceFilter filter) throws IOException, ZipException, PageException {
@@ -665,36 +717,73 @@ public final class Zip extends BodyTagImpl {
 					empty = false;
 				}
 				else {
-					add(zip, children[i].getInputStream(), parent + children[i].getName(), children[i].lastModified(), true);
+					add(zip, children[i], parent + children[i].getName(), children[i].lastModified());
 					empty = false;
 				}
 			}
 		}
-		if (empty) zip.addFolder(parent, null);
+
+		// empty
+		if (empty && !Util.isEmpty(parent, true)) {
+			createEmptyDirectory(zip, dir, parent, null);
+		}
+
 	}
 
-	private void add(ZipFile zip, InputStream is, String path, long lastMod, boolean closeInput) throws IOException, ZipException, PageException {
+	private void createEmptyDirectory(ZipFile zip, Resource dir, String path, ZipParameters parameters) throws ZipException {
+		File f = engine.getCastUtil().toFile(dir, null);
+		if (parameters == null) parameters = new ZipParameters();
+		parameters.setFileNameInZip(toDir(path));
+		zip.addFolder(f, parameters);
+		elements++;
+	}
+
+	private static String toDir(String str) {
+		str = str.trim().replace('\\', '/');
+		if (str.startsWith("/")) str = str.substring(1);
+		if (!str.endsWith("/")) return str + "/";
+		return str;
+	}
+
+	private static String toFile(String str) {
+		str = str.trim().replace('\\', '/');
+		if (str.startsWith("/")) str = str.substring(1);
+		if (str.endsWith("/")) str = str.substring(0, str.length() - 1);
+		return str;
+	}
+
+	private void add(ZipFile zip, InputStream is, String entryPath, long lastMod, boolean closeInput, ZipParameters parameters) throws IOException, ZipException, PageException {
 		if (alreadyUsed == null) alreadyUsed = new HashSet<String>();
-		else if (alreadyUsed.contains(path)) {
+		else if (alreadyUsed.contains(entryPath)) {
 			if (closeInput) Util.closeEL(is);
 			return;
 		}
 
 		// TODO set lastMod
 		try {
-			// Resource tmp = pageContext.getConfig().getTempDirectory().getRealResource(getTempName());
-			// engine.getIOUtil().copy(is, tmp, closeInput);
-
-			// File tmp2=engine.getCastUtil().toFile(tmp);
-			// zip.addFile(tmp2, createParam(path));
-			zip.addStream(is, createParam(path));
-			// zip.getFileHeader(path).setLastModFileTime((int)Zip4jUtil.javaToDosTime(lastMod));
-
+			zip.addStream(is, createParam(entryPath, parameters));
 		}
 		finally {
 			if (closeInput) Util.closeEL(is);
 		}
-		alreadyUsed.add(path);
+		alreadyUsed.add(entryPath);
+	}
+
+	private void add(ZipFile zip, Resource res, String entryPath, long lastMod) throws IOException, ZipException, PageException {
+		if (alreadyUsed == null) alreadyUsed = new HashSet<String>();
+		else if (alreadyUsed.contains(entryPath)) {
+			return;
+		}
+
+		File f = engine.getCastUtil().toFile(res, null);
+		if (f == null) {
+			add(zip, res.getInputStream(), entryPath, lastMod, true, null);
+			return;
+		}
+
+		zip.addFile((File) res, createParam(entryPath, null));
+		elements++;
+		alreadyUsed.add(entryPath);
 	}
 
 	private String[] splitPathX(String path) {
@@ -711,47 +800,33 @@ public final class Zip extends BodyTagImpl {
 
 	}
 
-	/*
-	 * private void add(ZipFile zip, File file, String path, long lastMod) throws IOException,
-	 * ZipException { if(alreadyUsed==null)alreadyUsed=new HashSet<String>(); else
-	 * if(alreadyUsed.contains(path)) return;
-	 * 
-	 * // TODO set lastMod try { String[] split = splitPath(path); System.out.println("--> path:"+path);
-	 * System.out.println(file); if(!Util.isEmpty(split[0],true)) zip.addFolder(split[0],
-	 * createParam(path)); zip.addFile(file, createParam(path)); } finally { //if(closeInput)
-	 * Util.closeEL(is); } alreadyUsed.add(path); }
-	 */
+	private ZipParameters createParam(String path, ZipParameters param) {
 
-	private ZipParameters createParam(String path) {
-
-		ZipParameters param = new ZipParameters();
-
-		param.setSourceExternalStream(true);
+		if (param == null) param = new ZipParameters();
 
 		// compression
 		param.setCompressionMethod(compressionMethod);
-		if (compressionMethod == Zip4jConstants.COMP_DEFLATE) {
+		if (CompressionMethod.DEFLATE.equals(compressionMethod)) {
 			param.setCompressionLevel(deflate);
 		}
 
 		// password
 		if (!Util.isEmpty(password)) {
-			if (encryption == Zip4jConstants.ENC_NO_ENCRYPTION) encryption = Zip4jConstants.ENC_METHOD_STANDARD;
-			param.setPassword(password);
+			if (EncryptionMethod.NONE.equals(encryption)) encryption = EncryptionMethod.ZIP_STANDARD;
 		}
 
 		// encryption
-		if (encryption != Zip4jConstants.ENC_NO_ENCRYPTION) {
+		if (!EncryptionMethod.NONE.equals(encryption)) {
 			param.setEncryptFiles(true);
 			param.setEncryptionMethod(encryption);
-			if (encryption == Zip4jConstants.ENC_METHOD_AES) {
+			if (EncryptionMethod.AES.equals(encryption)) {
 				param.setAesKeyStrength(aes);
 			}
 		}
 
 		// path
-		param.setFileNameInZip(path);
-
+		param.setDefaultFolderPath("/");
+		param.setFileNameInZip(toFile(path));
 		// TODO last mod
 
 		return param;
@@ -806,8 +881,8 @@ public final class Zip extends BodyTagImpl {
 
 	private ZipFile getZip(Resource file, String password) throws IOException, ZipException, PageException {
 		ZipFile zf = new ZipFile(engine.getCastUtil().toFile(file));
-		if (!Util.isEmpty(password) && zf.isEncrypted()) {
-			zf.setPassword(password);
+		if (!Util.isEmpty(password) && (file.length() == 0 || zf.isEncrypted())) {
+			zf.setPassword(password.toCharArray());
 		}
 		return zf;
 	}
@@ -817,7 +892,6 @@ public final class Zip extends BodyTagImpl {
 	 * 
 	 * @param attributeName
 	 * @param attributValue
-	 * @throws ApplicationException
 	 */
 	private void required(String attributeName, String attributValue) throws PageException {
 		if (Util.isEmpty(attributValue)) throw engine.getExceptionUtil().createApplicationException("invalid attribute combination for the tag zip",
@@ -834,7 +908,6 @@ public final class Zip extends BodyTagImpl {
 	 * 
 	 * @param attributeName
 	 * @param attributValue
-	 * @throws ApplicationException
 	 */
 	private void required(String attributeName, Resource attributValue, boolean exists) throws PageException {
 		if (attributValue == null) throw engine.getExceptionUtil().createApplicationException("invalid attribute combination for the tag zip",
