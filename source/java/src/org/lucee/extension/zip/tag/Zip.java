@@ -40,6 +40,7 @@ import org.lucee.extension.zip.filter.FileResourceFilter;
 import org.lucee.extension.zip.filter.OrResourceFilter;
 import org.lucee.extension.zip.filter.UDFFilter;
 import org.lucee.extension.zip.filter.WildcardPatternFilter;
+import org.lucee.extension.zip.util.CompressUtil;
 
 import lucee.commons.io.res.Resource;
 import lucee.commons.io.res.filter.ResourceFilter;
@@ -57,7 +58,6 @@ import net.lingala.zip4j.model.enums.AesKeyStrength;
 import net.lingala.zip4j.model.enums.CompressionLevel;
 import net.lingala.zip4j.model.enums.CompressionMethod;
 import net.lingala.zip4j.model.enums.EncryptionMethod;
-import net.lingala.zip4j.util.Zip4jUtil;
 
 public final class Zip extends BodyTagImpl {
 
@@ -431,7 +431,7 @@ public final class Zip extends BodyTagImpl {
 				query.setAt("name", row, path);
 				query.setAt("size", row, engine.getCastUtil().toDouble(fh.getUncompressedSize())); // TODO do better
 				query.setAt("type", row, fh.isDirectory() ? "Directory" : "File");
-				query.setAt("dateLastModified", row, engine.getCreationUtil().createDateTime(Zip4jUtil.dosToJavaTme(fh.getLastModifiedTime())));
+				query.setAt("dateLastModified", row, engine.getCreationUtil().createDateTime(CompressUtil.dosToJavaTme(fh.getLastModifiedTime())));
 				query.setAt("crc", row, engine.getCastUtil().toDouble(fh.getCrc()));
 				query.setAt("compressedSize", row, engine.getCastUtil().toDouble(fh.getCompressedSize()));
 				query.setAt("comment", row, fh.getFileComment());
@@ -559,7 +559,7 @@ public final class Zip extends BodyTagImpl {
 				if (target instanceof File) {
 					((File) target).setExecutable(true);// TODO was is executable?
 				}
-				target.setLastModified(Zip4jUtil.dosToJavaTme(fh.getLastModifiedTime()));
+				target.setLastModified(CompressUtil.dosToJavaTme(fh.getLastModifiedTime()));
 			}
 		}
 		finally {
@@ -615,7 +615,7 @@ public final class Zip extends BodyTagImpl {
 							// causes problems
 						}
 						else {
-							add(out, in.getInputStream(fh), fh.getFileName(), Zip4jUtil.dosToJavaTme(fh.getLastModifiedTime()), true, toZipParameters(fh));
+							add(out, in.getInputStream(fh), fh.getFileName(), CompressUtil.dosToJavaTme(fh.getLastModifiedTime()), true, toZipParameters(fh));
 						}
 					}
 				}
