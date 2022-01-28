@@ -10,7 +10,7 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      luceeVersion: 6.0.0.114-SNAPSHOT
+      luceeVersion: light-6.0.0.149-SNAPSHOT
 
     steps:
     - uses: actions/checkout@v2
@@ -50,5 +50,6 @@ jobs:
         execute: /bootstrap-tests.cfm
         luceeVersion: ${{ env.luceeVersion }}
         extensionDir: ${{ github.workspace }}/dist
+        extensions: 37C61C0A-5D7E-4256-8572639BE0CF5838 # esapi required to run lucee test suite with lucee light
       env:
         testLabels: zip
