@@ -45,7 +45,7 @@ public class UDFFilter extends UDFFilterSupport implements ResourceAndResourceNa
 
 	@Override
 	public boolean accept(Resource file) {
-		return accept(file.getAbsolutePath());
+		return accept(file.getPath());
 	}
 
 	@Override
