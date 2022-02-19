@@ -43,6 +43,7 @@ import org.lucee.extension.zip.filter.WildcardPatternFilter;
 import org.lucee.extension.zip.util.CompressUtil;
 
 import lucee.commons.io.res.Resource;
+import lucee.commons.io.res.ResourceProvider;
 import lucee.commons.io.res.filter.ResourceFilter;
 import lucee.loader.util.Util;
 import lucee.runtime.exp.PageException;
@@ -403,6 +404,7 @@ public final class Zip extends BodyTagImpl {
 
 		ZipFile zip = getZip(file, password);
 		Iterator<FileHeader> it = zip.getFileHeaders().iterator();
+		ResourceProvider frp = engine.getResourceUtil().getFileResourceProvider();
 
 		try {
 			FileHeader fh;
@@ -420,7 +422,7 @@ public final class Zip extends BodyTagImpl {
 				dir = index == -1 ? "" : path.substring(0, index);
 				name = path.substring(index + 1);
 
-				if (filter != null && !filter.accept(file.getRealResource(name))) continue;
+				if (filter != null && !filter.accept(frp.getResource(path))) continue;
 
 				if (!entryPathMatch(dir)) continue;
 				// if(entryPath!=null && !(dir.equalsIgnoreCase(entryPath) ||
