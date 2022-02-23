@@ -343,6 +343,8 @@ public final class Zip extends BodyTagImpl {
 			int index;
 			boolean accept;
 
+			ResourceProvider frp = engine.getResourceUtil().getFileResourceProvider();
+
 			if (filter == null && recurse && (entryPaths == null || entryPaths.length == 0))
 				throw engine.getExceptionUtil().createApplicationException("define at least one restriction, can't delete all the entries from a zip file");
 
@@ -360,7 +362,7 @@ public final class Zip extends BodyTagImpl {
 				// dir=index==-1?"":path.substring(0,index);
 				name = path.substring(index + 1);
 
-				if (filter != null && !filter.accept(file.getRealResource(name))) accept = true;
+				if (filter != null && !filter.accept(frp.getResource(path))) accept = true;
 				if (!entryPathMatch(path)) accept = true;
 
 				if (!accept) removes.add(fh);// zip.removeFile(fh);
