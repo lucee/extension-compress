@@ -53,14 +53,17 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="zip" {
             it( title="Checking zip action = delete UDF filter", body=function( currentSpec ) {  
                 createTestZip(); // recreate zip file
 
-                var zipEntryPaths = [];
+                var deletedZipEntries = [];
                 var zipListFilter = function ( zipEntryPath ) {
-                    ArrayAppend( zipEntryPaths, replace( zipEntryPath, "\", "/", "all" ) );
-                    return replace( zipEntryPath, "\", "/", "all" ) contains "n/m";
+                    if ( replace( zipEntryPath, "\", "/", "all" ) contains "n/m" ) {
+                        ArrayAppend( deletedZipEntries, replace( zipEntryPath, "\", "/", "all" ) );
+                        return true;
+                    }
+                    return false;
                 };
                 
-                zip action="delete" file=target filter=zipListFilter; // delete file have "n" in path
-                expect( listSort( ArrayToList( zipEntryPaths ), 'textnocase' ) ).toBe( '1/2.cfm,a.txt,b.txt,b/c/a.txt,n/m/b.txt,n/m/b/c/a.txt' );
+                zip action="delete" file=target filter=zipListFilter; // delete file have "n/m" in path
+                expect( listSort( ArrayToList( deletedZipEntries ), 'textnocase' ) ).toBe( 'n/m/b.txt,n/m/b/c/a.txt' );
 
                 zip action="list" file=target name="local.qry";
                 expect(len(qry)).toBe(4);
