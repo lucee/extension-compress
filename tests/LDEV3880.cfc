@@ -52,7 +52,7 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="zip" {
                 zip action="list" name="local.qry" file=target filter="*.txt|*.js"; // pipe(|) as delimeter
                 expect(len(qry)).toBe(5);
 
-                zip action="list" name="local.qry" file=target filter="*.txt,*.js|*.cfm"; // Boht comma(,) & pipe(|) as delimeter
+                zip action="list" name="local.qry" file=target filter="*.txt,*.js|*.cfm"; // Both comma(,) & pipe(|) as delimeter
                 expect(len(qry)).toBe(6);
 
                 zip action="list" name="local.qry" file=target filter="*.txt$*.js$*.cfm" filterdelimiters="$"; // Using filterdelimiters argument
