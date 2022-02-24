@@ -58,7 +58,7 @@ public class WildcardPattern {
 		this.pattern = pattern;
 		this.isInclude = !isExclude;
 
-		StringTokenizer tokenizer = new StringTokenizer(pattern, !Util.isEmpty(delimiters, true) ? delimiters : "|");
+		StringTokenizer tokenizer = new StringTokenizer(pattern, !Util.isEmpty(delimiters, true) ? delimiters : "|,");
 
 		patterns = new ArrayList<ParsedPattern>();
 
