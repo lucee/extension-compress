@@ -322,7 +322,7 @@ public final class Zip extends BodyTagImpl {
 	public int doStartTag() throws PageException {
 		// filter
 		if (!Util.isEmpty(this.pattern)) {
-			_setFilter(new WildcardPatternFilter(pattern, Util.isEmpty(patternDelimiters) ? "," : patternDelimiters));
+			_setFilter(new WildcardPatternFilter(pattern, Util.isEmpty(patternDelimiters) ? "|," : patternDelimiters));
 		}
 		return EVAL_BODY_INCLUDE;
 	}
