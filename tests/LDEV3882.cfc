@@ -38,39 +38,32 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="zip" {
         describe( "Testcase for LDEV-3882",function() {
             it( title="Checking zip action = delete wildcard filter", body=function( currentSpec ) {
                 createTestZip();
-                zip action="list" file=target name="local.qry";
-                expect(len(qry)).toBe(6);
-
                 zip action="delete" file=target filter="*.cfm"; // delete cfm file
 
                 zip action="list" file=target name="local.qry"; 
                 expect(len(qry)).toBe(5);
 
                 createTestZip(); // recreate zip file 
-
                 zip action="delete" file=target filter="*.txt"; // delete txt files
 
                 zip action="list" file=target name="local.qry"; 
                 expect(len(qry)).toBe(1);
             });
 
-            it( title="Checking zip action = delete UDF filter", body=function( currentSpec ) {
+            it( title="Checking zip action = delete UDF filter", body=function( currentSpec ) {  
                 createTestZip(); // recreate zip file
-
-                zip action="list" file=target name="local.qry"; 
-                expect(len(qry)).toBe(6);
 
                 var zipEntryPaths = [];
                 var zipListFilter = function ( zipEntryPath ) {
                     ArrayAppend( zipEntryPaths, replace( zipEntryPath, "\", "/", "all" ) );
-                    return zipEntryPath contains "n";
+                    return replace( zipEntryPath, "\", "/", "all" ) contains "n/m";
                 };
-
+                
                 zip action="delete" file=target filter=zipListFilter; // delete file have "n" in path
+                expect( listSort( ArrayToList( zipEntryPaths ), 'textnocase' ) ).toBe( '1/2.cfm,a.txt,b.txt,b/c/a.txt,n/m/b.txt,n/m/b/c/a.txt' );
 
                 zip action="list" file=target name="local.qry";
                 expect(len(qry)).toBe(4);
-                expect( listSort( ArrayToList( zipEntryPaths ), 'textnocase' ) ).toBe( '1/2.cfm,a.txt,b.txt,b/c/a.txt,n/m/b.txt,n/m/b/c/a.txt' );
             });
         });
     }
