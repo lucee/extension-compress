@@ -785,10 +785,14 @@ public final class Zip extends BodyTagImpl {
 			add(zip, res.getInputStream(), entryPath, lastMod, true, null);
 			return;
 		}
-
-		zip.addFile((File) res, createParam(entryPath, null));
-		elements++;
-		alreadyUsed.add(entryPath);
+		try {
+			zip.addFile((File) res, createParam(entryPath, null));
+			elements++;
+			alreadyUsed.add(entryPath);
+		} catch (Exception ioe) {
+			add(zip, res.getInputStream(), entryPath, lastMod, true, null);
+			return;
+		}
 	}
 
 	private String[] splitPathX(String path) {
