@@ -307,8 +307,7 @@ public final class Zip extends BodyTagImpl {
 			this.encryption = EncryptionMethod.ZIP_STANDARD_VARIANT_STRONG;
 		}
 		else throw engine.getExceptionUtil()
-				.createApplicationException("encryption [" + encryption + "] is invalid," + " valid values are [aes(=aes256),aes128,standard,standardStrong]");
-
+				.createApplicationException("encryption [" + encryption + "] is invalid," + " valid values are [aes(=aes256), aes128, standard, standardStrong]");		
 	}
 
 	/**
@@ -401,7 +400,8 @@ public final class Zip extends BodyTagImpl {
 		required("name", name);
 
 		lucee.runtime.type.Query query = engine.getCreationUtil()
-				.createQuery(new String[] { "name", "size", "type", "dateLastModified", "directory", "crc", "compressedSize", "comment" }, 0, "query");
+				.createQuery(new String[] { "name", "size", "type", "dateLastModified", "directory", "crc", "compressedSize", 
+					"comment", "encrypted","encryptionAlgorithm", "compressionMethod" }, 0, "query");
 		pageContext.setVariable(name, query);
 
 		ZipFile zip = getZip(file, password);
@@ -429,7 +429,6 @@ public final class Zip extends BodyTagImpl {
 				if (!entryPathMatch(dir)) continue;
 				// if(entryPath!=null && !(dir.equalsIgnoreCase(entryPath) ||
 				// StringUtil.startsWithIgnoreCase(dir,entryPath+"/"))) ;///continue;
-
 				row++;
 				query.addRow();
 				query.setAt("name", row, path);
@@ -437,6 +436,9 @@ public final class Zip extends BodyTagImpl {
 				query.setAt("type", row, fh.isDirectory() ? "Directory" : "File");
 				query.setAt("dateLastModified", row, engine.getCreationUtil().createDateTime(CompressUtil.dosToJavaTme(fh.getLastModifiedTime())));
 				query.setAt("crc", row, engine.getCastUtil().toDouble(fh.getCrc()));
+				query.setAt("encrypted", row, fh.isEncrypted());
+				query.setAt("encryptionAlgorithm", row, fh.getEncryptionMethod().name());
+				query.setAt("compressionMethod", row, fh.getCompressionMethod().name());
 				query.setAt("compressedSize", row, engine.getCastUtil().toDouble(fh.getCompressedSize()));
 				query.setAt("comment", row, fh.getFileComment());
 				query.setAt("directory", row, dir);
@@ -785,7 +787,6 @@ public final class Zip extends BodyTagImpl {
 			add(zip, res.getInputStream(), entryPath, lastMod, true, null);
 			return;
 		}
-
 		zip.addFile((File) res, createParam(entryPath, null));
 		elements++;
 		alreadyUsed.add(entryPath);
@@ -833,7 +834,6 @@ public final class Zip extends BodyTagImpl {
 		param.setDefaultFolderPath("/");
 		param.setFileNameInZip(toFile(path));
 		// TODO last mod
-
 		return param;
 	}
 
