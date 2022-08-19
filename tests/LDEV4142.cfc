@@ -1,4 +1,4 @@
-component extends = "org.lucee.cfml.test.LuceeTestCase" labels="zip" {
+component extends = "org.lucee.cfml.test.LuceeTestCase" labels="zip" skip="true" {
 	
 	function beforeAll() {
 		variables.path = "#getDirectoryFromPath(getCurrenttemplatepath())#LDEV4142\";
