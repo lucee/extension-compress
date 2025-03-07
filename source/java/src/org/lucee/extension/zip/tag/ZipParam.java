@@ -18,13 +18,12 @@
  **/
 package org.lucee.extension.zip.tag;
 
-import javax.servlet.jsp.tagext.Tag;
-
 import org.lucee.extension.zip.ZipParamContent;
 import org.lucee.extension.zip.ZipParamSource;
 import org.lucee.extension.zip.filter.UDFFilter;
 import org.lucee.extension.zip.filter.WildcardPatternFilter;
 
+import jakarta.servlet.jsp.tagext.Tag;
 import lucee.commons.io.res.Resource;
 import lucee.commons.io.res.filter.ResourceFilter;
 import lucee.loader.util.Util;

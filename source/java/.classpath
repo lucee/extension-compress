@@ -6,8 +6,9 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="libs/lucee.jar"/>
-	<classpathentry kind="lib" path="libs/javax.servlet.jar"/>
-	<classpathentry kind="lib" path="libs/net.lingala.zip4j-2.9.0.jar"/>
+	<classpathentry kind="lib" path="libs/net.lingala.zip4j-2.11.5.jar"/>
+	<classpathentry kind="lib" path="libs/jakarta.jakartaee-api-10.0.0.jar"/>
+	<classpathentry kind="lib" path="libs/lucee-7.0.0.115-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="libs/zip4j-2.11.5.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

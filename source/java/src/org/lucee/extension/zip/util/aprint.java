@@ -12,12 +12,11 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.http.Cookie;
-
 import org.w3c.dom.Attr;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
+
 import lucee.loader.engine.CFMLEngineFactory;
 
 /**
@@ -215,23 +214,20 @@ public class aprint {
 		else if (o instanceof ResultSet) _eo(ps, (ResultSet) o);
 		else if (o instanceof Node) _eo(ps, (Node) o);
 		else if (o instanceof Throwable) _eo(ps, (Throwable) o);
-		else if (o instanceof Cookie) {
-			Cookie c = (Cookie) o;
-			ps.println("Cookie(name:" + c.getName() + ";domain:" + c.getDomain() + ";maxage:" + c.getMaxAge() + ";path:" + c.getPath() + ";value:" + c.getValue() + ";version:"
-					+ c.getVersion() + ";secure:" + c.getSecure() + ")");
-		}
 		else if (o instanceof InputSource) {
 			InputSource is = (InputSource) o;
 			Reader r = is.getCharacterStream();
 			try {
 				ps.println(r.toString());
 			}
-			catch (Throwable e) {}
+			catch (Throwable e) {
+			}
 			finally {
 				try {
 					r.close();
 				}
-				catch (Exception e) {}
+				catch (Exception e) {
+				}
 			}
 		}
 
