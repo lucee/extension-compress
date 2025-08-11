@@ -273,15 +273,15 @@ public final class Zip extends BodyTagImpl {
 			this.compressionMethod = CompressionMethod.DEFLATE;
 			this.deflate = CompressionLevel.MAXIMUM;
 		}
-		else if ("deflateUtra".equalsIgnoreCase(compressionMethod)) {
+		else if ("deflateUltra".equalsIgnoreCase(compressionMethod) || "deflateUtra".equalsIgnoreCase(compressionMethod)) {
 			this.compressionMethod = CompressionMethod.DEFLATE;
-			this.deflate = CompressionLevel.NORMAL;
+			this.deflate = CompressionLevel.ULTRA;
 		}
-		else if ("aesenc".equalsIgnoreCase(compressionMethod)) this.compressionMethod = CompressionMethod.AES_INTERNAL_ONLY;
-		else if ("AESINTERNALONLY".equalsIgnoreCase(compressionMethod)) this.compressionMethod = CompressionMethod.AES_INTERNAL_ONLY;
+		//else if ("aesenc".equalsIgnoreCase(compressionMethod)) this.compressionMethod = CompressionMethod.AES_INTERNAL_ONLY;
+		//else if ("AESINTERNALONLY".equalsIgnoreCase(compressionMethod)) this.compressionMethod = CompressionMethod.AES_INTERNAL_ONLY;
 		else if ("store".equalsIgnoreCase(compressionMethod)) this.compressionMethod = CompressionMethod.STORE;
-		else throw engine.getExceptionUtil().createApplicationException("compression method [" + compressionMethod + "] is invalid,"
-				+ " valid values are [deflate(=deflateNormal),deflateFast,deflateFastest,deflateMaximum,deflateUtra,aesenc,store]");
+		else throw engine.getExceptionUtil().createApplicationException("Compression method [" + compressionMethod + "] is invalid,"
+				+ " valid values are [ deflate(=deflateNormal), deflateFast, deflateFastest, deflateMaximum, deflateUltra, store ]");
 	}
 
 	public void setEncryptionalgorithm(String encryption) throws PageException {
