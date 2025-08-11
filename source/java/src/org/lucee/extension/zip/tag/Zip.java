@@ -307,7 +307,7 @@ public final class Zip extends BodyTagImpl {
 			this.encryption = EncryptionMethod.ZIP_STANDARD_VARIANT_STRONG;
 		}
 		else throw engine.getExceptionUtil()
-				.createApplicationException("encryption [" + encryption + "] is invalid," + " valid values are [aes(=aes256), aes128, standard, standardStrong]");		
+				.createApplicationException("encryption [" + encryption + "] is invalid," + " valid values are [aes(=aes256), aes128, standard, standardStrong]");
 	}
 
 	/**
@@ -399,9 +399,8 @@ public final class Zip extends BodyTagImpl {
 		required("file", file, true);
 		required("name", name);
 
-		lucee.runtime.type.Query query = engine.getCreationUtil()
-				.createQuery(new String[] { "name", "size", "type", "dateLastModified", "directory", "crc", "compressedSize", 
-					"comment", "encrypted","encryptionAlgorithm", "compressionMethod" }, 0, "query");
+		lucee.runtime.type.Query query = engine.getCreationUtil().createQuery(new String[] { "name", "size", "type", "dateLastModified", "directory", "crc", "compressedSize",
+				"comment", "encrypted", "encryptionAlgorithm", "compressionMethod" }, 0, "query");
 		pageContext.setVariable(name, query);
 
 		ZipFile zip = getZip(file, password);
@@ -529,12 +528,12 @@ public final class Zip extends BodyTagImpl {
 					continue;
 				}
 				target = ZipUtil.toResource(destination, fh.getFileName());
-				
+
 				// entrypath
 				if (!entryPathMatch(path)) {
 					continue;
 				}
-				
+
 				if (target.exists() && overwrite) target.delete();
 
 				// filter

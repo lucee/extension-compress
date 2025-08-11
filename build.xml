@@ -5,7 +5,6 @@
     </description>
     <!-- set global properties for this build -->
   
-  <property file="build.properties"/>
 
   <property name="lib" location="source/java/libs"/>
   <property name="src" location="source/java/src"/>
@@ -13,31 +12,13 @@
   <property name="srcContext" location="source/context"/>
   <property name="temp" location="temp"/>
   <property name="build" location="build"/>
-  <property name="dist"  location="dist"/>
+  <property name="dist"  location="target"/>
 
   <property name="tld" location="source/tld"/>
   <property name="fld" location="source/fld"/>
   
 
-  
-  <buildnumber file="build.number"/>
 
-  <scriptdef name="replace" language="javascript">
-     <attribute name="haystack" />
-     <attribute name="needle" />
-     <attribute name="repl" />
-     <attribute name="property" />
-     <![CDATA[
-      var text = attributes.get("haystack");
-      var needle = attributes.get("needle");
-      var repl = attributes.get("repl");
-      text=text.trim();
-
-      var regex = new RegExp(needle,'g');
-      text=text.replace(regex,repl);
-      project.setProperty(attributes.get("property"), text);
-     ]]>
-  </scriptdef>
 
   <path id="classpath">
     <fileset dir="${lib}">
@@ -76,7 +57,7 @@
 
     <echo file="${dist}/extension/META-INF/MANIFEST.MF">Manifest-Version: 1.0
 Built-Date: ${NOW}
-version: "${bundleversion}${build.number}${appendix}"
+version: "${bundleversion}"
 id: "${id}"
 name: "${label}"
 description: "${description}"
@@ -93,7 +74,7 @@ start-bundles: false
   <target name="compile" depends="copy"
         description="compile the source " >
       <!-- Compile Compress Extension -->
-      <javac srcdir="${temp}" target="1.8" destdir="${build}" debug="true" debuglevel="lines,vars,source">
+      <javac srcdir="${temp}" source="11" target="11" destdir="${build}" debug="true" debuglevel="lines,vars,source">
       <classpath refid="classpath" />
     </javac>
   </target>
@@ -114,9 +95,9 @@ start-bundles: false
  
     <!-- Put everything in ${build} into .jar file -->
     <jar 
-    	jarfile="${dist}/extension/jars/${filename}-${bundleversion}${build.number}${appendix}.jar" basedir="${build}"  manifest="${src}/META-INF/MANIFEST.MF">
+    	jarfile="${dist}/extension/jars/${filename}-${bundleversion}.jar" basedir="${build}"  manifest="${src}/META-INF/MANIFEST.MF">
       <manifest>
-        <attribute name="Bundle-Version" value="${bundleversion}${build.number}${appendix}"/>
+        <attribute name="Bundle-Version" value="${bundleversion}"/>
         <attribute name="Built-Date" value="${NOW}"/>
         <attribute name="Bundle-SymbolicName" value="${bundlename}"/>
 
@@ -126,10 +107,20 @@ start-bundles: false
 
 
     <!-- copy the tlds necessary -->
-    <loadfile property="content1" srcFile="${tld}/tag.tldx" />
-    <replace haystack="${content1}" needle="{bundle-name}" repl="${bundlename}" property="content2"/>
-    <replace haystack="${content2}" needle="{bundle-version}" repl="${bundleversion}${build.number}${appendix}" property="content3"/>
-    <echo message="${content3}" file="${dist}/extension/tlds/ziptag.tldx"/>
+    <copy 
+      file="${tld}/tag.tldx" 
+      tofile="${dist}/extension/tlds/ziptag.tldx" />
+
+    <replaceregexp 
+      file="${dist}/extension/tlds/ziptag.tldx" 
+      match="\{bundle-name\}" 
+      replace="${bundlename}" 
+      byline="true"/>
+    <replaceregexp 
+      file="${dist}/extension/tlds/ziptag.tldx" 
+      match="\{bundle-version\}" 
+      replace="${bundleversion}" 
+      byline="true"/>
 
 
     <!-- copy the jars necessary -->
@@ -137,8 +128,9 @@ start-bundles: false
       <fileset dir="${lib}">
         <include name="**/*.jar"/>
         <exclude name="**/javax.*"/>
+        <exclude name="**/jakarta.*"/>
         <exclude name="**/jsp-*"/>
-        <exclude name="**/lucee.jar"/>
+        <exclude name="**/lucee*.jar"/>
         <exclude name="**/org.apache.felix.framework-*"/>
       </fileset>
     </copy>
@@ -153,7 +145,7 @@ start-bundles: false
 
 
     <!-- Zip everything  -->
-     <zip destfile="${dist}/${filename}-${bundleversion}${build.number}${appendix}.lex">
+     <zip destfile="${dist}/${filename}-${bundleversion}.lex">
         <zipfileset dir="${dist}/extension"/>
     </zip>
 		

@@ -1,4 +1,4 @@
-component extends="org.lucee.cfml.test.LuceeTestCase" labels="zip"{
+component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress"{
 	function beforeAll(){
 		variables.uri = createURI("LDEV1989");
 	}
