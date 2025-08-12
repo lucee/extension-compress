@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.lucee</groupId>
     <artifactId>compress-extension</artifactId>
-    <version>2.0.0.2-SNAPSHOT
+    <version>2.0.0.0-SNAPSHOT
 </version>
     <packaging>pom</packaging>
     <name>Compress Extension</name>
@@ -13,7 +13,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <id>3CC7FB3F-33B8-4919-8D04166F91485281</id>
+        <id>8D7FB0DF-08BB-1589-FE3975678F07DB17</id>
         <bundlename>org.lucee.compress.extension</bundlename>
         <luceeCoreVersion>7.0.0.110</luceeCoreVersion>
         <releaseType>server</releaseType>
