@@ -18,8 +18,6 @@
  **/
 package org.lucee.extension.zip.tag;
 
-import jakarta.ejb.ApplicationException;
-import jakarta.servlet.jsp.JspException;
 import jakarta.servlet.jsp.tagext.Tag;
 import lucee.loader.engine.CFMLEngine;
 import lucee.loader.engine.CFMLEngineFactory;
@@ -65,12 +63,12 @@ public abstract class TagImpl implements Tag {
 	}
 
 	@Override
-	public int doStartTag() throws JspException {
+	public int doStartTag() throws PageException {
 		return SKIP_BODY;
 	}
 
 	@Override
-	public int doEndTag() throws JspException {
+	public int doEndTag() throws PageException {
 		return EVAL_PAGE;
 	}
 
@@ -86,7 +84,6 @@ public abstract class TagImpl implements Tag {
 	 * @param tagName
 	 * @param attributeName
 	 * @param attribute
-	 * @throws ApplicationException
 	 */
 	public void required(String tagName, String actionName, String attributeName, Object attribute) throws PageException {
 		if (attribute == null) throw engine.getExceptionUtil()

@@ -277,8 +277,10 @@ public final class Zip extends BodyTagImpl {
 			this.compressionMethod = CompressionMethod.DEFLATE;
 			this.deflate = CompressionLevel.ULTRA;
 		}
-		//else if ("aesenc".equalsIgnoreCase(compressionMethod)) this.compressionMethod = CompressionMethod.AES_INTERNAL_ONLY;
-		//else if ("AESINTERNALONLY".equalsIgnoreCase(compressionMethod)) this.compressionMethod = CompressionMethod.AES_INTERNAL_ONLY;
+		// else if ("aesenc".equalsIgnoreCase(compressionMethod)) this.compressionMethod =
+		// CompressionMethod.AES_INTERNAL_ONLY;
+		// else if ("AESINTERNALONLY".equalsIgnoreCase(compressionMethod)) this.compressionMethod =
+		// CompressionMethod.AES_INTERNAL_ONLY;
 		else if ("store".equalsIgnoreCase(compressionMethod)) this.compressionMethod = CompressionMethod.STORE;
 		else throw engine.getExceptionUtil().createApplicationException("Compression method [" + compressionMethod + "] is invalid,"
 				+ " valid values are [ deflate(=deflateNormal), deflateFast, deflateFastest, deflateMaximum, deflateUltra, store ]");
