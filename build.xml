@@ -64,8 +64,9 @@ description: "${description}"
 lucee-core-version: "${luceeCoreVersion}"
 release-type: ${releaseType}
 start-bundles: false
+resource: "[{'class':'${classTgz}','bundleName':'${bundlename}','bundleVersion':'${bundleversion}','scheme':'tgz','lock-timeout':'10000'},
+ {'class':'${classTar}','bundleName':'${bundlename}','bundleVersion':'${bundleversion}','scheme':'tar','lock-timeout':'10000'}]"
 </echo>
-
 
   </target>
   
@@ -104,7 +105,21 @@ start-bundles: false
       </manifest>
     </jar>
 
+    <!-- copy the flds necessary -->
+    <copy 
+      file="${fld}/function.fld" 
+      tofile="${dist}/extension/flds/compress.fld" />
 
+    <replaceregexp 
+      file="${dist}/extension/flds/compress.fld" 
+      match="\{bundle-name\}" 
+      replace="${bundlename}" 
+      byline="true"/>
+    <replaceregexp 
+      file="${dist}/extension/flds/compress.fld" 
+      match="\{bundle-version\}" 
+      replace="${bundleversion}" 
+      byline="true"/>
 
     <!-- copy the tlds necessary -->
     <copy 

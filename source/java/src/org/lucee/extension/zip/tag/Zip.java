@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 
+import org.lucee.extension.compress.CompressUtil;
 import org.lucee.extension.zip.ZipParamAbstr;
 import org.lucee.extension.zip.ZipParamContent;
 import org.lucee.extension.zip.ZipParamSource;
@@ -40,7 +41,6 @@ import org.lucee.extension.zip.filter.FileResourceFilter;
 import org.lucee.extension.zip.filter.OrResourceFilter;
 import org.lucee.extension.zip.filter.UDFFilter;
 import org.lucee.extension.zip.filter.WildcardPatternFilter;
-import org.lucee.extension.zip.util.CompressUtil;
 
 import lucee.commons.io.res.Resource;
 import lucee.commons.io.res.ResourceProvider;
@@ -435,7 +435,7 @@ public final class Zip extends BodyTagImpl {
 				query.setAt("name", row, path);
 				query.setAt("size", row, engine.getCastUtil().toDouble(fh.getUncompressedSize())); // TODO do better
 				query.setAt("type", row, fh.isDirectory() ? "Directory" : "File");
-				query.setAt("dateLastModified", row, engine.getCreationUtil().createDateTime(CompressUtil.dosToJavaTme(fh.getLastModifiedTime())));
+				query.setAt("dateLastModified", row, engine.getCreationUtil().createDateTime(org.lucee.extension.compress.CompressUtil.dosToJavaTme(fh.getLastModifiedTime())));
 				query.setAt("crc", row, engine.getCastUtil().toDouble(fh.getCrc()));
 				query.setAt("encrypted", row, fh.isEncrypted());
 				query.setAt("encryptionAlgorithm", row, fh.getEncryptionMethod().name());

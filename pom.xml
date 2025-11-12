@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.lucee</groupId>
     <artifactId>compress-extension</artifactId>
-    <version>2.0.0.3</version>
+    <version>2.1.0.0-BETA</version>
     <packaging>pom</packaging>
     <name>Compress Extension</name>
 
@@ -14,9 +14,12 @@
         <maven.compiler.target>11</maven.compiler.target>
         <id>8D7FB0DF-08BB-1589-FE3975678F07DB17</id>
         <bundlename>org.lucee.compress.extension</bundlename>
+        <classTgz>org.lucee.extension.compress.resource.TGZResourceProvider</classTgz>
+        <classTar>org.lucee.extension.compress.resource.TarResourceProvider</classTar>
+        <classZip>org.lucee.extension.compress.resource.ZipResourceProvider</classZip>
         <luceeCoreVersion>7.0.0.110</luceeCoreVersion>
         <releaseType>server</releaseType>
-        <label>Compress Tags for Jakarta EE (Lucee 7+)</label>
+        <label>Compress Tags and functions for Jakarta EE (Lucee 7+)</label>
         <release.url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</release.url>
         <snapshot.url>https://oss.sonatype.org/content/repositories/snapshots/</snapshot.url>
     </properties>
@@ -119,7 +122,9 @@
                                 <ant antfile="build.xml" target="clean">
                                     <property name="bundleversion" value="${project.version}"/>
                                     <property name="bundlename" value="${bundlename}"/>
-                                    <property name="class" value="${class}"/>
+                                    <property name="classTgz" value="${classTgz}"/>
+                                    <property name="classTar" value="${classTar}"/>
+                                    <property name="classZip" value="${classZip}"/>
                                     <property name="filename" value="${project.artifactId}"/>
                                     <property name="id" value="${id}"/>
                                     <property name="luceeCoreVersion" value="${luceeCoreVersion}"/>
