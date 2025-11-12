@@ -21,6 +21,10 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress"	{
 	function run( testResults , testBox ) {
 		describe( title="Test suite for TGZ virtual file system", body=function() {
 			
+			it(title="check if the tar resource provider is installed", body = function( currentSpec ) {
+				expect(	getClassFor("tgz") ).toBe( "org.lucee.extension.compress.resource.TGZResourceProvider" );
+			});
+
 			it(title="test TGZ file operations - fileWrite, fileRead, fileAppend", body = function( currentSpec ) {
 				testTGZFileOperations();
 			});
@@ -174,6 +178,19 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress"	{
 				directoryDelete(tempDir, true);
 			}
 		}
+	}
+
+
+	private function getClassFor(scheme) {
+		var pc=getPageContext();
+		var config=pc.getConfig();
+		var schemes={};
+		loop array=config.getResourceProviders()	item="local.provider" {
+			if(provider.scheme==arguments.scheme) return provider.class.name;
+			schemes[provider.scheme]=provider.class.name;
+		}
+		throw "scheme [#arguments.scheme#] not found, only the following schemes are available [#serializeJson(schemes)#]"
+		dump(config);
 	}
 } 
 </cfscript>
