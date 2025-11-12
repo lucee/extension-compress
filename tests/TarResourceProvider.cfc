@@ -54,8 +54,8 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress"	{
 			var initialFile = tempDir & "initial.txt";
 			fileWrite(initialFile, "initial");
 			
-			// Create TAR archive
-			zip action="zip" file="#tarFile#" source="#tempDir#" overwrite="true" format="tar";
+			// Create TAR archive using compress function
+			compress("tar", tempDir, tarFile);
 			
 			// Test file write inside TAR
 			var pathInTAR = "tar://#tarFile#!/testfile.txt";
@@ -89,8 +89,8 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress"	{
 			fileWrite(tempDir & "file1.txt", "content1");
 			fileWrite(tempDir & "subfolder/file2.txt", "content2");
 			
-			// Create TAR archive
-			zip action="zip" file="#tarFile#" source="#tempDir#" overwrite="true" format="tar";
+			// Create TAR archive using compress function
+			compress("tar", tempDir, tarFile);
 			
 			// Test directory list at root
 			var pathInTAR = "tar://#tarFile#!/";
@@ -123,8 +123,8 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress"	{
 			directoryCreate(tempDir);
 			fileWrite(tempDir & "test.txt", "test content");
 			
-			// Create TAR archive
-			zip action="zip" file="#tarFile#" source="#tempDir#" overwrite="true" format="tar";
+			// Create TAR archive using compress function
+			compress("tar", tempDir, tarFile);
 			
 			// Test fileExists
 			var pathInTAR = "tar://#tarFile#!/test.txt";
@@ -155,8 +155,8 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress"	{
 			directoryCreate(tempDir & "level1/level2/level3/");
 			fileWrite(tempDir & "level1/level2/level3/deep.txt", "deep content");
 			
-			// Create TAR archive
-			zip action="zip" file="#tarFile#" source="#tempDir#" overwrite="true" format="tar";
+			// Create TAR archive using compress function
+			compress("tar", tempDir, tarFile);
 			
 			// Test reading from nested path
 			var deepPath = "tar://#tarFile#!/level1/level2/level3/deep.txt";
