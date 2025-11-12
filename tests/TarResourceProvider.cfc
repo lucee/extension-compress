@@ -63,6 +63,11 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress"	{
 			
 			// Test file write inside TAR
 			var pathInTAR = "tar://#tarFile#!/testfile.txt";
+
+			// if this is not resolved against the tar resource provider, the path will start with "file://" or just "/"
+			assertEquals(left(expandPath(pathInTAR),6), "tar://");
+
+
 			fileWrite(pathInTAR, phrase1);
 			assertTrue(fileExists(pathInTAR));
 			
