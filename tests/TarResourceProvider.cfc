@@ -94,16 +94,22 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress"	{
 		try {
 			// Create temp directory with some structure
 			directoryCreate(tempDir);
+			assertTrue(directoryExists(tempDir));
+			
 			directoryCreate(tempDir & "subfolder/");
+			assertTrue(directoryExists(tempDir & "subfolder/"));
+
 			fileWrite(tempDir & "file1.txt", "content1");
 			fileWrite(tempDir & "subfolder/file2.txt", "content2");
 			
 			// Create TAR archive using compress function
-			compress("tar", tempDir, tarFile);
+			compress("tar", tempDir, tarFile,true);
 			
 			// Test directory list at root
 			var pathInTAR = "tar://#tarFile#!/";
 			var dirList = directoryList(pathInTAR);
+			systemOutput("--- list ---",1,1);
+			systemOutput(dirList,1,1);
 			assertTrue(arrayLen(dirList) > 0);
 			
 			// Test directory list in subfolder
