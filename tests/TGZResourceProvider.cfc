@@ -59,7 +59,7 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress"	{
 			fileWrite(initialFile, "initial");
 			
 			// Create TGZ archive using compress function
-			compress("tgz", tempDir, tgzFile);
+			compress("tgz", tempDir, tgzFile,false);
 			
 			// Test file write inside TGZ
 			var pathInTGZ = "tgz://#tgzFile#!/testfile.txt";
@@ -94,7 +94,7 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress"	{
 			fileWrite(tempDir & "subfolder/file2.txt", "content2");
 			
 			// Create TGZ archive using compress function
-			compress("tgz", tempDir, tgzFile);
+			compress("tgz", tempDir, tgzFile,false);
 			
 			// Test directory list at root
 			var pathInTGZ = "tgz://#tgzFile#!/";
@@ -128,7 +128,7 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress"	{
 			fileWrite(tempDir & "test.txt", "test content");
 			
 			// Create TGZ archive using compress function
-			compress("tgz", tempDir, tgzFile);
+			compress("tgz", tempDir, tgzFile,false);
 			
 			// Test fileExists
 			var pathInTGZ = "tgz://#tgzFile#!/test.txt";
@@ -160,7 +160,7 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress"	{
 			fileWrite(tempDir & "level1/level2/level3/deep.txt", "deep content");
 			
 			// Create TGZ archive using compress function
-			compress("tgz", tempDir, tgzFile);
+			compress("tgz", tempDir, tgzFile,false);
 			
 			// Test reading from nested path
 			var deepPath = "tgz://#tgzFile#!/level1/level2/level3/deep.txt";
