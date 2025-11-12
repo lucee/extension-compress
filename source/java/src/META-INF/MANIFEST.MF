@@ -5,4 +5,4 @@ Require-Bundle: net.lingala.zip4j;bundle-version=2.11.5,
  org.apache.commons.commons-compress;bundle-version=1.26.1,
  org.apache.commons.commons-codec;bundle-version=1.15.0,
  org.apache.commons.commons-io;bundle-version=2.11.0,
- org.apache.commons.lang3;bundle-version=3.12.0,
+ org.apache.commons.lang3;bundle-version=3.12.0
