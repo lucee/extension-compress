@@ -186,7 +186,7 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress"	{
 		}
 		finally {
 			if (directoryExists(tempDir)) {
-				directoryDelete(tempDir, true);
+				try{directoryDelete(tempDir, true);}catch(ex) {}
 			}
 		}
 	}
