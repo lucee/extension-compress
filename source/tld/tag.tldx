@@ -18,7 +18,8 @@
 	<!-- Zip -->
 	<tag>
 		<name>Zip</name>
-		<tag-class bundle-name="{bundle-name}" bundle-version="{bundle-version}">org.lucee.extension.zip.tag.Zip</tag-class>
+		<tag-class bundle-name="{bundle-name}" bundle-version="{bundle-version}">org.lucee.extension.zip.tag.jakarta.Zip</tag-class>
+		<javax-tag-class bundle-name="{bundle-name}" bundle-version="{bundle-version}">org.lucee.extension.zip.tag.javax.Zip</javax-tag-class>
 		<body-content>free</body-content>
 		<body-rtexprvalue>false</body-rtexprvalue>
 		<script>
@@ -254,7 +255,8 @@
 	<!-- ZipParam -->
 	<tag>
 		<name>ZipParam</name>
-		<tag-class bundle-name="{bundle-name}" bundle-version="{bundle-version}">org.lucee.extension.zip.tag.ZipParam</tag-class>
+		<tag-class bundle-name="{bundle-name}" bundle-version="{bundle-version}">org.lucee.extension.zip.tag.jakarta.ZipParam</tag-class>
+		<javax-tag-class bundle-name="{bundle-name}" bundle-version="{bundle-version}">org.lucee.extension.zip.tag.javax.ZipParam</javax-tag-class>
 		<body-content>empty</body-content>
 		<body-rtexprvalue>false</body-rtexprvalue>
 		<script>
@@ -358,10 +360,4 @@
 			<description>Supported algorithms are aes(=aes256), aes128 and standard</description>
     	</attribute>
 	</tag>
-
-
-
-
-
-
 </taglib>

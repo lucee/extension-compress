@@ -16,7 +16,7 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  * 
  **/
-package org.lucee.extension.zip.tag;
+package org.lucee.extension.zip.tag.jakarta;
 
 import org.lucee.extension.zip.ZipParamContent;
 import org.lucee.extension.zip.ZipParamSource;
