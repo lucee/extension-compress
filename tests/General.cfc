@@ -35,8 +35,15 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compressX"{
 				}
 				else {
 					java=createObject("java", "org.lucee.extension.zip.tag.javax.Zip","org.lucee.compress.extension");
+					var pc=getPageContext();
+					var var2 = pc.use(
+						"org.lucee.extension.zip.tag.Zip", 
+						"compress.extension", "2.1.0.2-SNAPSHOT", "cfzip", 0, "/Users/mic/Test/lucee-6/webapps/ROOT/test7.cfm:22");
+						throw "ups, should not be here";
+
 				}
 				
+
 			});
 			
 		});
