@@ -21,9 +21,6 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compressX"{
 				}
 				
 			});
-			it( title='make sure we always fail', body=function( currentSpec ) {
-				throw "fail!"
-			});
 			
 		});
 	}
