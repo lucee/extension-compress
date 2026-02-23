@@ -1,5 +1,22 @@
 component extends="org.lucee.cfml.test.LuceeTestCase" labels="compressX"{
-	
+	private function dumpLogs(dir) {
+	loop array=directoryList(dir) item="local.filename" {
+		if (findNoCase(".log", filename)) {
+			systemOutput("--- #filename# ---",1,1);
+			systemOutput(fileRead(filename),1,1);
+		}
+	}
+	}
+
+	function 
+	function afterAll(){
+		var pc=getPageContext();
+		var c=pc.getConfig();
+		
+		dumpLogs(c.getConfigServerDir().getRealResource("logs/"));
+		dumpLogs(c.getConfigDir().getRealResource("logs/"));
+	}
+
 	function run( testResults , testBox ) {
 		describe( "Test suite for loading tags", function() {
 			it( title='are the tags listed', body=function( currentSpec ) {
