@@ -1,7 +1,7 @@
-component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress"{
+component extends="org.lucee.cfml.test.LuceeTestCase" labels="compressX"{
 	
 	function run( testResults , testBox ) {
-		describe( "Test suitegenarry looks if the enviroment is loaded", function() {
+		describe( "Test suite for loading tags", function() {
 			it( title='are the tags listed', body=function( currentSpec ) {
 				var tags=getTagList().cf;
 				expect( structKeyExists(tags,"zip") ).toBeTrue();
@@ -21,7 +21,9 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress"{
 				}
 				
 			});
-
+			it( title='make sure we always fail', body=function( currentSpec ) {
+				throw "fail!"
+			});
 			
 		});
 	}

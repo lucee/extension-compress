@@ -86,7 +86,7 @@ jobs:
           luceeVersionQuery: ${{ matrix.lucee.query }}
           extensionDir: ${{ github.workspace }}/target
         env:
-          testLabels: compress
+          testLabels: compressX
           testAdditional: ${{ github.workspace }}/tests
 
   deploy:
