@@ -21,8 +21,8 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compressX"{
 		describe( "Test suite for loading tags", function() {
 			it( title='are the tags listed', body=function( currentSpec ) {
 				var tags=getTagList().cf;
-				expect( structKeyExists(tags,"zip") ).toBeTrue();
 				expect( structKeyExists(tags,"zipparam") ).toBeTrue();
+				expect( structKeyExists(tags,"zip") ).toBeTrue();
 			});
 			it( title='do we have tag data', body=function( currentSpec ) {
 				var data=getTagData("cf","zip");
@@ -35,17 +35,6 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compressX"{
 				}
 				else {
 					java=createObject("java", "org.lucee.extension.zip.tag.javax.Zip","org.lucee.compress.extension");
-					var pc=getPageContext();
-					savecontent variable="dta" {
-						dump(java);
-					};
-					systemOutput(dta,1,1);
-
-					var var2 = pc.use(
-						"org.lucee.extension.zip.tag.Zip", 
-						"compress.extension", "2.1.0.2-SNAPSHOT", "cfzip", 0, "/Users/mic/Test/lucee-6/webapps/ROOT/test7.cfm:22");
-						throw "ups, should not be here";
-
 				}
 				
 
