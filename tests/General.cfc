@@ -8,7 +8,7 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compressX"{
 	}
 	}
 
-	function 
+	 
 	function afterAll(){
 		var pc=getPageContext();
 		var c=pc.getConfig();
