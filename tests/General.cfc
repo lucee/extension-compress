@@ -11,6 +11,16 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress"{
 				var data=getTagData("cf","zip");
 				expect( structKeyExists(data,"name") ).toBeTrue();
 			});
+			it( title='load zip class', body=function( currentSpec ) {
+				// is jakarta environment 
+				if( isInstanceOf(getPageContext().getHTTPServletRequest(),"jakarta.servlet.http.HttpServletRequest") ) {
+					java=createObject("java", "org.lucee.extension.zip.tag.jakarta.Zip","org.lucee.compress.extension");
+				}
+				else {
+					java=createObject("java", "org.lucee.extension.zip.tag.javax.Zip","org.lucee.compress.extension");
+				}
+				
+			});
 
 			
 		});
