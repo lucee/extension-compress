@@ -35,27 +35,27 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress" {
 
          if ( fileExists( target ) ) fileDelete( target );
 
-        zip action="zip" file=target {
-            zipparam entryPath = "/1/2.cfm" source=variables.file1;
-            zipparam source = variables.file1;
-            zipparam source = variables.dir1;
-            zipparam prefix="n/m" source = variables.dir1;
+        cfzip(action="zip", file=target) {
+            cfzipparam(entryPath = "/1/2.cfm", source=variables.file1);
+            cfzipparam(source=variables.file1);
+            cfzipparam(source=variables.dir1);
+            cfzipparam(prefix="n/m", source=variables.dir1);
         }
     }
 
     function run( testResults, testBox ) {
         describe( "Testcase for LDEV-3880",function() {
             it( title="Checking cfzip filter delimiters", body=function( currentSpec ) {
-                zip action="list" name="local.qry" file=target filter="*.txt,*.js"; // comma(,) as delimeter
+                cfzip(action="list", name="local.qry", file=target, filter="*.txt,*.js"); // comma(,) as delimeter
                 expect(len(qry)).toBe(5);
 
-                zip action="list" name="local.qry" file=target filter="*.txt|*.js"; // pipe(|) as delimeter
+                cfzip(action="list", name="local.qry", file=target, filter="*.txt|*.js"); // pipe(|) as delimeter
                 expect(len(qry)).toBe(5);
 
-                zip action="list" name="local.qry" file=target filter="*.txt,*.js|*.cfm"; // Both comma(,) & pipe(|) as delimeter
+                cfzip(action="list", name="local.qry", file=target, filter="*.txt,*.js|*.cfm"); // Both comma(,) & pipe(|) as delimeter
                 expect(len(qry)).toBe(6);
 
-                zip action="list" name="local.qry" file=target filter="*.txt$*.js$*.cfm" filterdelimiters="$"; // Using filterdelimiters argument
+                cfzip(action="list", name="local.qry", file=target, filter="*.txt$*.js$*.cfm", filterdelimiters="$"); // Using filterdelimiters argument
                 expect(len(qry)).toBe(6);
             });
         });
