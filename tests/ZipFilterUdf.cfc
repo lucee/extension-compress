@@ -43,24 +43,24 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress" {
 		try {
 			if ( fileExists( target ) ) fileDelete( target );
 			// zip
-			zip action="zip" file=target {
-				zipparam entryPath = "/1/2.cfm" source=variables.file1;
-				zipparam source = variables.file1;
-				zipparam source = variables.dir1;
-				zipparam prefix="n/m" source =variables.dir1;
+			cfzip(action="zip", file=target) {
+				cfzipparam(entryPath = "/1/2.cfm", source=variables.file1);
+				cfzipparam(source=variables.file1);
+				cfzipparam(source=variables.dir1);
+				cfzipparam(prefix="n/m", source=variables.dir1);
 			}
 
 			// first test normal filter wildcards
-			zip action="list" file=target name="local.qry" filter="*.zip"; 
+			cfzip(action="list", file=target, name="local.qry", filter="*.zip");
 			expect( qry.recordcount ).toBe( 0 ); // there are no zips
-			
-			zip action="list" file=target name="local.qry" filter="#variables.testSubFolder#/*";
+
+			cfzip(action="list", file=target, name="local.qry", filter="#variables.testSubFolder#/*");
 			expect( qry.recordcount ).toBe( 0 ); // shouldn't match parent folder
 
-			zip action="list" file=target name="local.qry" filter="*.txt";
+			cfzip(action="list", file=target, name="local.qry", filter="*.txt");
 			expect( qry.recordcount ).toBe( 5 );
 
-			zip action="list" file=target name="local.qry" filter="*.cfm";
+			cfzip(action="list", file=target, name="local.qry", filter="*.cfm");
 			expect( qry.recordcount ).toBe( 1 );
 			
 			// then test udf filters
