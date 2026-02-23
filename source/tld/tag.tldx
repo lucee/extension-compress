@@ -31,6 +31,7 @@
 		In addition to the basic zip and unzip functions, use the cfzip tag to delete entries from an archive, filter files,
 		read files in binary format, list the contents of an archive, and specify an entry path used in an executable JAR file.</description>
 		<attribute-type>fixed</attribute-type>
+		<!--
 		<attribute-groups>
 			<group>
 				<name>zip</name>
@@ -69,6 +70,7 @@
 				<attributes>file,entryPath,filter,filterDelimiters,recurse,password</attributes>
 			</group>
 		</attribute-groups>
+		-->
 		<attribute>
 			<type>string</type>
 			<name>action</name>
