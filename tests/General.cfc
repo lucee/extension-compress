@@ -39,6 +39,7 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compressX"{
 					savecontent variable="dta" {
 						dump(java);
 					};
+					systemOutput(dta,1,1);
 
 					var var2 = pc.use(
 						"org.lucee.extension.zip.tag.Zip", 
