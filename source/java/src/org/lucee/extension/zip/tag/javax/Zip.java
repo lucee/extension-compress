@@ -16,7 +16,7 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  * 
  **/
-package org.lucee.extension.zip.tag;
+package org.lucee.extension.zip.tag.javax;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 
+import org.lucee.extension.compress.CompressUtil;
 import org.lucee.extension.zip.ZipParamAbstr;
 import org.lucee.extension.zip.ZipParamContent;
 import org.lucee.extension.zip.ZipParamSource;
@@ -40,10 +41,11 @@ import org.lucee.extension.zip.filter.FileResourceFilter;
 import org.lucee.extension.zip.filter.OrResourceFilter;
 import org.lucee.extension.zip.filter.UDFFilter;
 import org.lucee.extension.zip.filter.WildcardPatternFilter;
-import org.lucee.extension.zip.util.CompressUtil;
 
 import lucee.commons.io.res.Resource;
+import lucee.commons.io.res.ResourceProvider;
 import lucee.commons.io.res.filter.ResourceFilter;
+import lucee.loader.engine.CFMLEngineFactory;
 import lucee.loader.util.Util;
 import lucee.runtime.exp.PageException;
 import lucee.runtime.type.Collection.Key;
@@ -272,15 +274,17 @@ public final class Zip extends BodyTagImpl {
 			this.compressionMethod = CompressionMethod.DEFLATE;
 			this.deflate = CompressionLevel.MAXIMUM;
 		}
-		else if ("deflateUtra".equalsIgnoreCase(compressionMethod)) {
+		else if ("deflateUltra".equalsIgnoreCase(compressionMethod) || "deflateUtra".equalsIgnoreCase(compressionMethod)) {
 			this.compressionMethod = CompressionMethod.DEFLATE;
-			this.deflate = CompressionLevel.NORMAL;
+			this.deflate = CompressionLevel.ULTRA;
 		}
-		else if ("aesenc".equalsIgnoreCase(compressionMethod)) this.compressionMethod = CompressionMethod.AES_INTERNAL_ONLY;
-		else if ("AESINTERNALONLY".equalsIgnoreCase(compressionMethod)) this.compressionMethod = CompressionMethod.AES_INTERNAL_ONLY;
+		// else if ("aesenc".equalsIgnoreCase(compressionMethod)) this.compressionMethod =
+		// CompressionMethod.AES_INTERNAL_ONLY;
+		// else if ("AESINTERNALONLY".equalsIgnoreCase(compressionMethod)) this.compressionMethod =
+		// CompressionMethod.AES_INTERNAL_ONLY;
 		else if ("store".equalsIgnoreCase(compressionMethod)) this.compressionMethod = CompressionMethod.STORE;
-		else throw engine.getExceptionUtil().createApplicationException("compression method [" + compressionMethod + "] is invalid,"
-				+ " valid values are [deflate(=deflateNormal),deflateFast,deflateFastest,deflateMaximum,deflateUtra,aesenc,store]");
+		else throw engine.getExceptionUtil().createApplicationException("Compression method [" + compressionMethod + "] is invalid,"
+				+ " valid values are [ deflate(=deflateNormal), deflateFast, deflateFastest, deflateMaximum, deflateUltra, store ]");
 	}
 
 	public void setEncryptionalgorithm(String encryption) throws PageException {
@@ -306,8 +310,7 @@ public final class Zip extends BodyTagImpl {
 			this.encryption = EncryptionMethod.ZIP_STANDARD_VARIANT_STRONG;
 		}
 		else throw engine.getExceptionUtil()
-				.createApplicationException("encryption [" + encryption + "] is invalid," + " valid values are [aes(=aes256),aes128,standard,standardStrong]");
-
+				.createApplicationException("encryption [" + encryption + "] is invalid," + " valid values are [aes(=aes256), aes128, standard, standardStrong]");
 	}
 
 	/**
@@ -318,10 +321,15 @@ public final class Zip extends BodyTagImpl {
 	}
 
 	@Override
-	public int doStartTag() throws PageException {
+	public int doStartTag() {
 		// filter
 		if (!Util.isEmpty(this.pattern)) {
-			_setFilter(new WildcardPatternFilter(pattern, Util.isEmpty(patternDelimiters) ? "," : patternDelimiters));
+			try {
+				_setFilter(new WildcardPatternFilter(pattern, Util.isEmpty(patternDelimiters) ? "|," : patternDelimiters));
+			}
+			catch (PageException pe) {
+				throw CFMLEngineFactory.getInstance().getExceptionUtil().createPageRuntimeException(pe);
+			}
 		}
 		return EVAL_BODY_INCLUDE;
 	}
@@ -342,6 +350,8 @@ public final class Zip extends BodyTagImpl {
 			int index;
 			boolean accept;
 
+			ResourceProvider frp = engine.getResourceUtil().getFileResourceProvider();
+
 			if (filter == null && recurse && (entryPaths == null || entryPaths.length == 0))
 				throw engine.getExceptionUtil().createApplicationException("define at least one restriction, can't delete all the entries from a zip file");
 
@@ -359,7 +369,7 @@ public final class Zip extends BodyTagImpl {
 				// dir=index==-1?"":path.substring(0,index);
 				name = path.substring(index + 1);
 
-				if (filter != null && !filter.accept(file.getRealResource(name))) accept = true;
+				if (filter != null && !filter.accept(frp.getResource(path))) accept = true;
 				if (!entryPathMatch(path)) accept = true;
 
 				if (!accept) removes.add(fh);// zip.removeFile(fh);
@@ -397,12 +407,13 @@ public final class Zip extends BodyTagImpl {
 		required("file", file, true);
 		required("name", name);
 
-		lucee.runtime.type.Query query = engine.getCreationUtil()
-				.createQuery(new String[] { "name", "size", "type", "dateLastModified", "directory", "crc", "compressedSize", "comment" }, 0, "query");
+		lucee.runtime.type.Query query = engine.getCreationUtil().createQuery(new String[] { "name", "size", "type", "dateLastModified", "directory", "crc", "compressedSize",
+				"comment", "encrypted", "encryptionAlgorithm", "compressionMethod" }, 0, "query");
 		pageContext.setVariable(name, query);
 
 		ZipFile zip = getZip(file, password);
 		Iterator<FileHeader> it = zip.getFileHeaders().iterator();
+		ResourceProvider frp = engine.getResourceUtil().getFileResourceProvider();
 
 		try {
 			FileHeader fh;
@@ -420,19 +431,21 @@ public final class Zip extends BodyTagImpl {
 				dir = index == -1 ? "" : path.substring(0, index);
 				name = path.substring(index + 1);
 
-				if (filter != null && !filter.accept(file.getRealResource(name))) continue;
+				if (filter != null && !filter.accept(frp.getResource(path))) continue;
 
 				if (!entryPathMatch(dir)) continue;
 				// if(entryPath!=null && !(dir.equalsIgnoreCase(entryPath) ||
 				// StringUtil.startsWithIgnoreCase(dir,entryPath+"/"))) ;///continue;
-
 				row++;
 				query.addRow();
 				query.setAt("name", row, path);
 				query.setAt("size", row, engine.getCastUtil().toDouble(fh.getUncompressedSize())); // TODO do better
 				query.setAt("type", row, fh.isDirectory() ? "Directory" : "File");
-				query.setAt("dateLastModified", row, engine.getCreationUtil().createDateTime(CompressUtil.dosToJavaTme(fh.getLastModifiedTime())));
+				query.setAt("dateLastModified", row, engine.getCreationUtil().createDateTime(org.lucee.extension.compress.CompressUtil.dosToJavaTme(fh.getLastModifiedTime())));
 				query.setAt("crc", row, engine.getCastUtil().toDouble(fh.getCrc()));
+				query.setAt("encrypted", row, fh.isEncrypted());
+				query.setAt("encryptionAlgorithm", row, fh.getEncryptionMethod().name());
+				query.setAt("compressionMethod", row, fh.getCompressionMethod().name());
 				query.setAt("compressedSize", row, engine.getCastUtil().toDouble(fh.getCompressedSize()));
 				query.setAt("comment", row, fh.getFileComment());
 				query.setAt("directory", row, dir);
@@ -524,6 +537,11 @@ public final class Zip extends BodyTagImpl {
 				}
 				target = ZipUtil.toResource(destination, fh.getFileName());
 
+				// entrypath
+				if (!entryPathMatch(path)) {
+					continue;
+				}
+
 				if (target.exists() && overwrite) target.delete();
 
 				// filter
@@ -531,10 +549,6 @@ public final class Zip extends BodyTagImpl {
 					continue;
 				}
 
-				// entrypath
-				if (!entryPathMatch(path)) {
-					continue;
-				}
 				if (!storePath) {
 					target = destination.getRealResource(target.getName());
 				}
@@ -781,12 +795,13 @@ public final class Zip extends BodyTagImpl {
 			return;
 		}
 		try {
-			zip.addFile((File) res, createParam(entryPath, null));
+			zip.addFile(f, createParam(entryPath, null));
 			elements++;
 			alreadyUsed.add(entryPath);
-		} catch (Exception ioe) {
+		}
+		catch (Exception e) {
+			// LDEV-2890 resource is not a local file (i.e. ram://), fall back to stream
 			add(zip, res.getInputStream(), entryPath, lastMod, true, null);
-			return;
 		}
 	}
 
@@ -832,7 +847,6 @@ public final class Zip extends BodyTagImpl {
 		param.setDefaultFolderPath("/");
 		param.setFileNameInZip(toFile(path));
 		// TODO last mod
-
 		return param;
 	}
 
@@ -847,7 +861,7 @@ public final class Zip extends BodyTagImpl {
 	}
 
 	@Override
-	public int doEndTag() throws PageException {// print.out("doEndTag"+doCaching+"-"+body);
+	public int doEndTag() {// print.out("doEndTag"+doCaching+"-"+body);
 		if (filters != null && filters.size() > 0) {
 			if (filters.size() == 1) filter = filters.getFirst();
 			else filter = new OrResourceFilter(filters.toArray(new ResourceFilter[filters.size()]));
@@ -868,7 +882,7 @@ public final class Zip extends BodyTagImpl {
 					"values for attribute action are:info,move,rename,copy,delete,read,readbinary,write,append,upload");
 		}
 		catch (Exception ioe) {
-			throw engine.getCastUtil().toPageException(ioe);
+			throw engine.getExceptionUtil().createPageRuntimeException(engine.getCastUtil().toPageException(ioe));
 		}
 
 		return EVAL_PAGE;

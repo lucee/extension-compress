@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE func-lib PUBLIC "-//Railo//DTD CFML Function Library 1.0//EN"
+	"dtd/web-cfmfunctionlibrary_1_0.dtd">
+<func-lib>
+	<flib-version>1.00</flib-version>
+	<short-name>compress</short-name>
+	<uri>http://extension.lucee.org/function/compress</uri>
+	<display-name>OWASP - ESAPI</display-name>
+	<description>
+		Compress functions
+	</description>
+
+	<!-- compress -->
+	<function>
+		<name>compress</name>
+		<class bundle-name="{bundle-name}" bundle-version="{bundle-version}">org.lucee.extension.compress.function.Compress</class>
+		<description>Compress given source to different formats.</description>
+		<argument>
+			<name>format</name>
+			<type>string</type>
+			<required>Yes</required>
+			<description>
+			Formats to compress the files:
+			- bzip
+			- bzip2
+			- gzip
+			- tar 
+			- tbz (same as tar.bz)
+			- tbz2
+			- tgz (same as tar.gz)
+			- zip
+			</description>
+		</argument>
+		<argument>
+			<name>source</name>
+			<type>string</type>
+			<required>Yes</required>
+			<description>
+			Path (relative or absolute) to source file or directory to compress.
+			For **gzip / bzip / bzip2** (single file format) must use path including the name of the file
+			</description>
+		</argument>
+		<argument>
+			<name>target</name>
+			<type>string</type>
+			<required>Yes</required>
+			<description>
+			Path (relative or absolute) including the name, where you want to save the compressed output-file
+			</description>
+		</argument>
+		<argument>
+			<name>includeBaseFolder</name>
+			<type>boolean</type>
+			<required>No</required>
+			<default>true</default>
+			<description>
+			Compress the directory or just the content of the directory
+			</description>
+		</argument>
+		<argument>
+			<name>mode</name>
+			<type>string</type>
+			<required>no</required>
+			<default>777</default>
+			<description>
+			Mode to store the files, pass 0 preserve the source file modes
+			</description>
+		</argument>
+		<return>
+			<type>boolean</type>
+		</return>
+	</function>
+
+
+	<!-- extract -->
+	<function>
+		<name>extract</name>
+		<class bundle-name="{bundle-name}" bundle-version="{bundle-version}">org.lucee.extension.compress.function.Extract</class>
+		<description>Extract the data of a compressed file</description>
+		<argument>
+			<name>format</name>
+			<type>string</type>
+			<required>Yes</required>
+			<description>
+			Format of the compressed file:
+			- bzip
+			- bzip2
+			- gzip
+			- tar 
+			- tbz (same as tar.bz)
+			- tbz2
+			- tgz (same as tar.gz)
+			- zip
+			</description>
+		</argument>
+		<argument>
+			<name>source</name>
+			<type>string</type>
+			<required>Yes</required>
+			<description>
+			Path (relative or absolute) to the source file or a directory with compressed files to extract
+			</description>
+		</argument>
+		<argument>
+			<name>target</name>
+			<type>string</type>
+			<required>Yes</required>
+			<description>
+			Path (relative or absolute) to the directory, where you want to extract the data.
+			For **gzip / bzip / bzip2** (single file format) must use path including the name of the file
+			</description>
+		</argument>
+		<return>
+			<type>boolean</type>
+		</return>
+	</function>
+</func-lib>

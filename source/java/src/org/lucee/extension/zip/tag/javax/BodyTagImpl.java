@@ -16,9 +16,8 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  * 
  **/
-package org.lucee.extension.zip.tag;
+package org.lucee.extension.zip.tag.javax;
 
-import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.tagext.BodyContent;
 import javax.servlet.jsp.tagext.BodyTag;
 
@@ -35,12 +34,12 @@ public abstract class BodyTagImpl extends TagImpl implements BodyTag {
 	}
 
 	@Override
-	public void doInitBody() throws JspException {
+	public void doInitBody() {
 
 	}
 
 	@Override
-	public int doAfterBody() throws JspException {
+	public int doAfterBody() {
 		return SKIP_BODY;
 	}
 

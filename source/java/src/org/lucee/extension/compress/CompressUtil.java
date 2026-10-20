@@ -1,0 +1,657 @@
+/**
+ * Copyright (c) 2015, Lucee Association Switzerland. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either 
+ * version 2.1 of the License, or (at your option) any later version.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public 
+ * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+package org.lucee.extension.compress;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
+
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
+import org.lucee.extension.zip.ZipUtil;
+import org.lucee.extension.zip.filter.OrResourceFilter;
+
+import lucee.commons.io.res.Resource;
+import lucee.commons.io.res.filter.ResourceFilter;
+import lucee.loader.engine.CFMLEngineFactory;
+import lucee.loader.util.Util;
+import lucee.runtime.util.IO;
+import lucee.runtime.util.ResourceUtil;
+import net.lingala.zip4j.util.Zip4jUtil;
+
+/**
+ * Util to manipulate zip files
+ */
+public final class CompressUtil {
+
+	/**
+	 * Field <code>FORMAT_ZIP</code>
+	 */
+	public static final int FORMAT_ZIP = 0;
+	/**
+	 * Field <code>FORMAT_TAR</code>
+	 */
+	public static final int FORMAT_TAR = 1;
+	/**
+	 * Field <code>FORMAT_TGZ</code>
+	 */
+	public static final int FORMAT_TGZ = 2;
+	/**
+	 * Field <code>FORMAT_GZIP</code>
+	 */
+	public static final int FORMAT_GZIP = 3;
+	/**
+	 * Field <code>FORMAT_BZIP</code>
+	 */
+	public static final int FORMAT_BZIP = 4;
+	/**
+	 * Field <code>FORMAT_BZIP</code>
+	 */
+	public static final int FORMAT_BZIP2 = 4;
+
+	/**
+	 * Field <code>FORMAT_TBZ</code>
+	 */
+	public static final int FORMAT_TBZ = 5;
+	/**
+	 * Field <code>FORMAT_TBZ2</code>
+	 */
+	public static final int FORMAT_TBZ2 = 5;
+
+	/**
+	 * Constructor of the class
+	 */
+	private CompressUtil() {
+	}
+
+	private static final Map<String, String> tokens = new ConcurrentHashMap<>();
+
+	public static String createToken(String prefix, String name) {
+		String str = prefix + ":" + name;
+		String lock = tokens.putIfAbsent(str, str);
+		if (lock == null) {
+			lock = str;
+		}
+		return lock;
+	}
+
+	/**
+	 * extract a zip file to a directory
+	 * 
+	 * @param format
+	 * @param source
+	 * @param target
+	 * @throws IOException
+	 */
+	public static void extract(int format, Resource source, Resource target) throws IOException {
+		if (format == FORMAT_ZIP) extractZip(source, target);
+		else if (format == FORMAT_TAR) extractTar(source, target);
+		else if (format == FORMAT_GZIP) extractGZip(source, target);
+		else if (format == FORMAT_BZIP) extractBZip(source, target);
+		else if (format == FORMAT_TGZ) extractTGZ(source, target);
+		else if (format == FORMAT_TBZ) extractTBZ(source, target);
+		else throw new IOException("Can't extract in given format");
+	}
+
+	/*
+	 * public static void listt(int format, Resource source) throws IOException { if (format ==
+	 * FORMAT_ZIP) listZipp(source); // else if(format==FORMAT_TAR) listar(source); // else
+	 * if(format==FORMAT_GZIP)listGZip(source); // else if(format==FORMAT_TGZ) listTGZ(source); else
+	 * throw new IOException("can't list in given format, atm only zip files are supported"); }
+	 */
+
+	private static void extractTGZ(Resource source, Resource target) throws IOException {
+		// File tmpTarget = File.createTempFile("_temp","tmp");
+		Resource tmp = CFMLEngineFactory.getInstance().getSystemUtil().getTempDirectory().getRealResource(System.currentTimeMillis() + ".tmp");
+		try {
+			// read Gzip
+			extractGZip(source, tmp);
+
+			// read Tar
+			extractTar(tmp, target);
+		}
+		finally {
+			tmp.delete();
+		}
+	}
+
+	private static void extractTBZ(Resource source, Resource target) throws IOException {
+		// File tmpTarget = File.createTempFile("_temp","tmp");
+		Resource tmp = CFMLEngineFactory.getInstance().getSystemUtil().getTempDirectory().getRealResource(System.currentTimeMillis() + ".tmp");
+		try {
+			// read bzip
+			extractBZip(source, tmp);
+
+			// read Tar
+			extractTar(tmp, target);
+		}
+		finally {
+			tmp.delete();
+		}
+	}
+
+	private static void extractBZip(Resource source, Resource target) throws IOException {
+		InputStream is = null;
+		OutputStream os = null;
+		IO util = CFMLEngineFactory.getInstance().getIOUtil();
+
+		try {
+			is = new BZip2CompressorInputStream(util.toBufferedInputStream(source.getInputStream()));
+			os = util.toBufferedOutputStream(target.getOutputStream());
+			util.copy(is, os, false, false);
+		}
+		finally {
+			util.closeSilent(is, os);
+		}
+	}
+
+	private static void extractGZip(Resource source, Resource target) throws IOException {
+		InputStream is = null;
+		OutputStream os = null;
+		IO util = CFMLEngineFactory.getInstance().getIOUtil();
+
+		try {
+			is = new GZIPInputStream(util.toBufferedInputStream(source.getInputStream()));
+			os = util.toBufferedOutputStream(target.getOutputStream());
+			util.copy(is, os, false, false);
+		}
+		finally {
+			util.closeSilent(is, os);
+		}
+	}
+
+	/**
+	 * extract a zip file to a directory
+	 * 
+	 * @param format
+	 * @param sources
+	 * @param target
+	 * @throws IOException
+	 */
+	public static void extract(int format, Resource[] sources, Resource target) throws IOException {
+		for (int i = 0; i < sources.length; i++) {
+			extract(format, sources[i], target);
+		}
+	}
+
+	private static void extractTar(Resource tarFile, Resource targetDir) throws IOException {
+		if (!targetDir.exists() || !targetDir.isDirectory()) throw new IOException("[" + targetDir + "] is not an existing directory");
+
+		if (!tarFile.exists()) throw new IOException("[" + tarFile + "] is not an existing file");
+
+		if (tarFile.isDirectory()) {
+			ResourceUtil util = CFMLEngineFactory.getInstance().getResourceUtil();
+
+			Resource[] files = tarFile.listResources(util.getExtensionResourceFilter("tar", false));
+			if (files == null) throw new IOException("directory [" + tarFile + "] is empty");
+			extract(FORMAT_TAR, files, targetDir);
+			return;
+		}
+
+		IO util = CFMLEngineFactory.getInstance().getIOUtil();
+
+		// read the tar file and extract its contents
+		TarArchiveInputStream tis = null;
+		try {
+			tis = new TarArchiveInputStream(util.toBufferedInputStream(tarFile.getInputStream()));
+			TarArchiveEntry entry;
+			int mode;
+			while ((entry = tis.getNextTarEntry()) != null) {
+				// print.ln(entry);
+				Resource target = targetDir.getRealResource(entry.getName());
+				if (entry.isDirectory()) {
+					target.mkdirs();
+				}
+				else {
+					Resource parent = target.getParentResource();
+					if (!parent.exists()) parent.mkdirs();
+					util.copy(tis, target, false);
+				}
+				target.setLastModified(entry.getModTime().getTime());
+				mode = entry.getMode();
+				if (mode > 0) {
+					target.setMode(ModeUtil.extractPermissions(mode, false));
+				}
+			}
+		}
+		finally {
+			util.closeSilent(tis);
+		}
+	}
+
+	private static void extractZip(Resource zipFile, Resource targetDir) throws IOException {
+		if (!targetDir.exists() || !targetDir.isDirectory()) throw new IOException("[" + targetDir + "] is not an existing directory");
+
+		if (!zipFile.exists()) throw new IOException("[" + zipFile + "] is not an existing file");
+		ResourceUtil util = CFMLEngineFactory.getInstance().getResourceUtil();
+
+		if (zipFile.isDirectory()) {
+			Resource[] files = zipFile
+					.listResources(new OrResourceFilter(new ResourceFilter[] { util.getExtensionResourceFilter("zip", false), util.getExtensionResourceFilter("jar", false),
+							util.getExtensionResourceFilter("ear", false), util.getExtensionResourceFilter("war", false), util.getExtensionResourceFilter("tar", false) }));
+			if (files == null) throw new IOException("directory [" + zipFile + "] is empty");
+			extract(FORMAT_ZIP, files, targetDir);
+			return;
+		}
+
+		// read the zip file and build a query from its contents
+		unzip(zipFile, targetDir);
+		/*
+		 * ZipInputStream zis=null; try { zis = new ZipInputStream(
+		 * IOUtil.toBufferedInputStream(zipFile.getInputStream()) ) ; ZipEntry entry; while ( ( entry =
+		 * zis.getNextEntry()) != null ) { Resource target=targetDir.getRealResource(entry.getName());
+		 * if(entry.isDirectory()) { target.mkdirs(); } else { Resource parent=target.getParentResource();
+		 * if(!parent.exists())parent.mkdirs();
+		 * 
+		 * IOUtil.copy(zis,target,false); } target.setLastModified(entry.getTime()); zis.closeEntry() ; } }
+		 * finally { IOUtil.closeEL(zis); }
+		 */
+	}
+
+	private static void unzip(Resource zipFile, Resource targetDir) throws IOException {
+		/*
+		 * if(zipFile instanceof File){ unzip((File)zipFile, targetDir); return; }
+		 */
+
+		IO util = CFMLEngineFactory.getInstance().getIOUtil();
+
+		ZipInputStream zis = null;
+		try {
+			zis = new ZipInputStream(util.toBufferedInputStream(zipFile.getInputStream()));
+			ZipEntry entry;
+			while ((entry = zis.getNextEntry()) != null) {
+				Resource target = ZipUtil.toResource(targetDir, entry);
+				if (entry.isDirectory()) {
+					target.mkdirs();
+				}
+				else {
+					Resource parent = target.getParentResource();
+					if (!parent.exists()) parent.mkdirs();
+					if (!target.exists()) util.copy(zis, target, false);
+				}
+				target.setLastModified(entry.getTime());
+				zis.closeEntry();
+			}
+		}
+		finally {
+			util.closeSilent(zis);
+		}
+	}
+
+	/**
+	 * compress data to a zip file
+	 * 
+	 * @param format format it that should by compressed usually is CompressUtil.FORMAT_XYZ
+	 * @param source
+	 * @param target
+	 * @param includeBaseFolder
+	 * @param mode
+	 * @throws IOException
+	 */
+	public static void compress(int format, Resource source, Resource target, boolean includeBaseFolder, int mode) throws IOException {
+		if (format == FORMAT_GZIP) compressGZip(source, target);
+		else if (format == FORMAT_BZIP2) compressBZip2(source, target);
+		else {
+			Resource[] sources = (!includeBaseFolder && source.isDirectory()) ? source.listResources() : new Resource[] { source };
+			compress(format, sources, target, mode);
+		}
+	}
+
+	/**
+	 * compress data to a zip file
+	 * 
+	 * @param format format it that should by compressed usually is CompressUtil.FORMAT_XYZ
+	 * @param sources
+	 * @param target
+	 * @param mode
+	 * @throws IOException
+	 */
+	public static void compress(int format, Resource[] sources, Resource target, int mode) throws IOException {
+
+		if (format == FORMAT_ZIP) compressZip(sources, target, null);
+		else if (format == FORMAT_TAR) compressTar(sources, target, mode);
+		else if (format == FORMAT_TGZ) compressTGZ(sources, target, mode);
+		else if (format == FORMAT_TBZ2) compressTBZ2(sources, target, mode);
+
+		else throw new IOException("Can't compress in given format");
+	}
+
+	/**
+	 * compress a source file/directory to a tar/gzip file
+	 * 
+	 * @param sources
+	 * @param target
+	 * @param mode
+	 * @throws IOException
+	 */
+	public static void compressTGZ(Resource[] sources, Resource target, int mode) throws IOException {
+		File tmpTarget = File.createTempFile("_temp", ".tmp");
+		IO util = CFMLEngineFactory.getInstance().getIOUtil();
+
+		try {
+			// write Tar
+			OutputStream tmpOs = new FileOutputStream(tmpTarget);
+			try {
+				compressTar(sources, tmpOs, mode);
+			}
+			finally {
+				util.closeSilent(tmpOs);
+			}
+
+			// write Gzip
+			InputStream is = null;
+			OutputStream os = null;
+			try {
+				is = new FileInputStream(tmpTarget);
+				os = target.getOutputStream();
+				compressGZip(is, os);
+			}
+			finally {
+				util.closeSilent(is, os);
+			}
+		}
+		finally {
+			tmpTarget.delete();
+		}
+	}
+
+	/**
+	 * compress a source file/directory to a tar/bzip2 file
+	 * 
+	 * @param sources
+	 * @param target
+	 * @param mode
+	 * @throws IOException
+	 */
+	private static void compressTBZ2(Resource[] sources, Resource target, int mode) throws IOException {
+		// File tmpTarget = File.createTempFile("_temp","tmp");
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		compressTar(sources, baos, mode);
+		_compressBZip2(new ByteArrayInputStream(baos.toByteArray()), target.getOutputStream());
+		// tmpTarget.delete();
+	}
+
+	/**
+	 * compress a source file to a gzip file
+	 * 
+	 * @param source
+	 * @param target
+	 * @throws IOException
+	 * @throws IOException
+	 */
+	private static void compressGZip(Resource source, Resource target) throws IOException {
+		if (source.isDirectory()) {
+			throw new IOException("You can only create a GZIP File from a single source file, use TGZ (TAR-GZIP) to first TAR multiple files");
+		}
+		IO util = CFMLEngineFactory.getInstance().getIOUtil();
+
+		InputStream is = null;
+		OutputStream os = null;
+		try {
+			is = source.getInputStream();
+			os = target.getOutputStream();
+		}
+		catch (IOException ioe) {
+			util.closeSilent(is, os);
+			throw ioe;
+		}
+		compressGZip(is, os);
+
+	}
+
+	public static void compressGZip(InputStream source, OutputStream target) throws IOException {
+		IO util = CFMLEngineFactory.getInstance().getIOUtil();
+
+		InputStream is = util.toBufferedInputStream(source);
+		if (!(target instanceof GZIPOutputStream)) target = new GZIPOutputStream(util.toBufferedOutputStream(target));
+		util.copy(is, target, true, true);
+	}
+
+	/**
+	 * compress a source file to a bzip2 file
+	 * 
+	 * @param source
+	 * @param target
+	 * @throws IOException
+	 */
+	private static void compressBZip2(Resource source, Resource target) throws IOException {
+		if (source.isDirectory()) {
+			throw new IOException("You can only create a BZIP File from a single source file, use TBZ (TAR-BZIP2) to first TAR multiple files");
+		}
+		IO util = CFMLEngineFactory.getInstance().getIOUtil();
+
+		InputStream is = null;
+		OutputStream os = null;
+		try {
+			is = source.getInputStream();
+			os = target.getOutputStream();
+		}
+		catch (IOException ioe) {
+			util.closeSilent(is, os);
+			throw ioe;
+		}
+
+		_compressBZip2(is, os);
+	}
+
+	/**
+	 * compress a source file to a bzip2 file
+	 * 
+	 * @param source
+	 * @param target
+	 * @throws IOException
+	 */
+	private static void _compressBZip2(InputStream source, OutputStream target) throws IOException {
+
+		IO util = CFMLEngineFactory.getInstance().getIOUtil();
+
+		InputStream is = util.toBufferedInputStream(source);
+		OutputStream os = new BZip2CompressorOutputStream(util.toBufferedOutputStream(target));
+		util.copy(is, os, true, true);
+	}
+
+	/**
+	 * compress a source file/directory to a zip file
+	 * 
+	 * @param sources
+	 * @param target
+	 * @param filter
+	 * @throws IOException
+	 */
+	public static void compressZip(Resource[] sources, Resource target, ResourceFilter filter) throws IOException {
+		IO util = CFMLEngineFactory.getInstance().getIOUtil();
+
+		ZipOutputStream zos = null;
+		try {
+			zos = new ZipOutputStream(util.toBufferedOutputStream(target.getOutputStream()));
+			compressZip("", sources, zos, filter);
+		}
+		finally {
+			util.closeSilent(zos);
+		}
+	}
+
+	public static void compressZip(Resource[] sources, ZipOutputStream zos, ResourceFilter filter) throws IOException {
+		compressZip("", sources, zos, filter);
+	}
+
+	private static void compressZip(String parent, Resource[] sources, ZipOutputStream zos, ResourceFilter filter) throws IOException {
+		if (!Util.isEmpty(parent)) parent += "/";
+		if (sources != null) {
+			for (int i = 0; i < sources.length; i++) {
+				compressZip(parent + sources[i].getName(), sources[i], zos, filter);
+			}
+		}
+	}
+
+	private static void compressZip(String parent, Resource source, ZipOutputStream zos, ResourceFilter filter) throws IOException {
+		if (source.isFile()) {
+			IO util = CFMLEngineFactory.getInstance().getIOUtil();
+
+			// if(filter.accept(source)) {
+			ZipEntry ze = new ZipEntry(parent);
+			ze.setTime(source.lastModified());
+			zos.putNextEntry(ze);
+			try {
+				util.copy(source.getInputStream(), zos, true, false);
+			}
+			finally {
+				zos.closeEntry();
+			}
+			// }
+		}
+		else if (source.isDirectory()) {
+			if (!Util.isEmpty(parent)) {
+				ZipEntry ze = new ZipEntry(parent + "/");
+				ze.setTime(source.lastModified());
+				try {
+					zos.putNextEntry(ze);
+				}
+				catch (IOException ioe) {
+					if ((ioe.getMessage() + "").indexOf("duplicate") == -1) throw ioe;
+				}
+				zos.closeEntry();
+			}
+			compressZip(parent, filter == null ? source.listResources() : source.listResources(filter), zos, filter);
+		}
+	}
+
+	/**
+	 * compress a source file/directory to a tar file
+	 * 
+	 * @param sources
+	 * @param target
+	 * @param mode
+	 * @throws IOException
+	 */
+	public static void compressTar(Resource[] sources, Resource target, int mode) throws IOException {
+		IO util = CFMLEngineFactory.getInstance().getIOUtil();
+
+		compressTar(sources, util.toBufferedOutputStream(target.getOutputStream()), mode);
+	}
+
+	public static void compressTar(Resource[] sources, OutputStream target, int mode) throws IOException {
+		if (target instanceof TarArchiveOutputStream) {
+			compressTar("", sources, (TarArchiveOutputStream) target, mode);
+			return;
+		}
+		TarArchiveOutputStream tos = new TarArchiveOutputStream(target);
+		tos.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU);
+		try {
+			compressTar("", sources, tos, mode);
+		}
+		finally {
+			IO util = CFMLEngineFactory.getInstance().getIOUtil();
+
+			util.closeSilent(tos);
+		}
+	}
+
+	public static void compressTar(String parent, Resource[] sources, TarArchiveOutputStream tos, int mode) throws IOException {
+
+		if (!Util.isEmpty(parent)) parent += "/";
+		if (sources != null) {
+			for (int i = 0; i < sources.length; i++) {
+				compressTar(parent + sources[i].getName(), sources[i], tos, mode);
+			}
+		}
+	}
+
+	private static void compressTar(String parent, Resource source, TarArchiveOutputStream tos, int mode) throws IOException {
+		String _parent = parent;
+		if (!source.isFile() && parent.charAt(parent.length() - 1) != '/') _parent += "/"; // indicates this is a directory
+
+		TarArchiveEntry entry = new TarArchiveEntry(_parent);
+
+		IO util = CFMLEngineFactory.getInstance().getIOUtil();
+
+		entry.setName(parent);
+		// mode
+		if (mode > 0) entry.setMode(ModeUtil.extractPermissions(mode, false));
+		else if (source.getMode() > 0) entry.setMode(ModeUtil.extractPermissions(source.getMode(), false));
+
+		if (source.isFile()) entry.setSize(source.length());
+		entry.setModTime(source.lastModified());
+		tos.putArchiveEntry(entry);
+		try {
+			if (source.isFile()) util.copy(source.getInputStream(), tos, true, false);
+		}
+		finally {
+			tos.closeArchiveEntry();
+		}
+
+		if (source.isDirectory()) {
+			Resource[] sources = source.listResources();
+			compressTar(parent, sources, tos, mode);
+		}
+	}
+
+	public static void merge(Resource[] sources, Resource target) throws IOException {
+		ZipEntry entry;
+		ZipInputStream zis = null;
+		ZipOutputStream zos = null;
+		Set<String> done = new HashSet<>();
+		IO util = CFMLEngineFactory.getInstance().getIOUtil();
+
+		try {
+			zos = new ZipOutputStream(util.toBufferedOutputStream(target.getOutputStream()));
+
+			for (Resource r: sources) {
+
+				try {
+					zis = new ZipInputStream(util.toBufferedInputStream(r.getInputStream()));
+					while ((entry = zis.getNextEntry()) != null) {
+						if (!done.contains(entry.getName())) {
+							zos.putNextEntry(entry);
+							util.copy(zis, zos, false, false);
+							done.add(entry.getName());
+						}
+						zos.closeEntry();
+					}
+				}
+				finally {
+					util.closeSilent(zis);
+				}
+			}
+		}
+		finally {
+			util.closeSilent(zos);
+		}
+	}
+
+	public static long dosToJavaTme(long dosTime) {
+		return Zip4jUtil.dosToExtendedEpochTme(dosTime);
+	}
+}

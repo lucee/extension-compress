@@ -16,11 +16,9 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  * 
  **/
-package org.lucee.extension.zip.tag;
+package org.lucee.extension.zip.tag.jakarta;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.Tag;
-
+import jakarta.servlet.jsp.tagext.Tag;
 import lucee.loader.engine.CFMLEngine;
 import lucee.loader.engine.CFMLEngineFactory;
 import lucee.loader.util.Util;
@@ -50,7 +48,7 @@ public abstract class TagImpl implements Tag {
 	}
 
 	@Override
-	public void setPageContext(javax.servlet.jsp.PageContext pageContext) {
+	public void setPageContext(jakarta.servlet.jsp.PageContext pageContext) {
 		this.pageContext = (PageContext) pageContext;
 	}
 
@@ -65,12 +63,12 @@ public abstract class TagImpl implements Tag {
 	}
 
 	@Override
-	public int doStartTag() throws JspException {
+	public int doStartTag() throws PageException {
 		return SKIP_BODY;
 	}
 
 	@Override
-	public int doEndTag() throws JspException {
+	public int doEndTag() throws PageException {
 		return EVAL_PAGE;
 	}
 
@@ -86,7 +84,6 @@ public abstract class TagImpl implements Tag {
 	 * @param tagName
 	 * @param attributeName
 	 * @param attribute
-	 * @throws ApplicationException
 	 */
 	public void required(String tagName, String actionName, String attributeName, Object attribute) throws PageException {
 		if (attribute == null) throw engine.getExceptionUtil()

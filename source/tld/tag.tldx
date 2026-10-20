@@ -18,7 +18,8 @@
 	<!-- Zip -->
 	<tag>
 		<name>Zip</name>
-		<tag-class bundle-name="{bundle-name}" bundle-version="{bundle-version}">org.lucee.extension.zip.tag.Zip</tag-class>
+		<tag-class bundle-name="{bundle-name}" bundle-version="{bundle-version}">org.lucee.extension.zip.tag.jakarta.Zip</tag-class>
+		<javax-tag-class bundle-name="{bundle-name}" bundle-version="{bundle-version}">org.lucee.extension.zip.tag.javax.Zip</javax-tag-class>
 		<body-content>free</body-content>
 		<body-rtexprvalue>false</body-rtexprvalue>
 		<script>
@@ -30,6 +31,46 @@
 		In addition to the basic zip and unzip functions, use the cfzip tag to delete entries from an archive, filter files,
 		read files in binary format, list the contents of an archive, and specify an entry path used in an executable JAR file.</description>
 		<attribute-type>fixed</attribute-type>
+		<!--
+		<attribute-groups>
+			<group>
+				<name>zip</name>
+				<label>Create/Update Archive</label>
+				<description>`action="zip"` - Create or update a ZIP or JAR archive</description>
+				<attributes>file,source,entryPath,filter,filterDelimiters,prefix,recurse,overwrite,storePath,password,encryptionAlgorithm,compressionMethod</attributes>
+			</group>
+			<group>
+				<name>unzip</name>
+				<label>Extract Archive</label>
+				<description>`action="unzip"` - Extract files from a ZIP or JAR archive</description>
+				<attributes>file,destination,entryPath,filter,filterDelimiters,recurse,overwrite,storePath,password</attributes>
+			</group>
+			<group>
+				<name>list</name>
+				<label>List Archive Contents</label>
+				<description>`action="list"` - List the contents of a ZIP or JAR archive</description>
+				<attributes>file,name,filter,filterDelimiters,entryPath,recurse,showDirectory,password</attributes>
+			</group>
+			<group>
+				<name>read</name>
+				<label>Read Archive Entry as Text</label>
+				<description>`action="read"` - Read an entry from a ZIP or JAR archive as text</description>
+				<attributes>file,variable,entryPath,charset,password</attributes>
+			</group>
+			<group>
+				<name>readBinary</name>
+				<label>Read Archive Entry as Binary</label>
+				<description>`action="readbinary"` - Read an entry from a ZIP or JAR archive as binary data</description>
+				<attributes>file,variable,entryPath,password</attributes>
+			</group>
+			<group>
+				<name>delete</name>
+				<label>Delete Archive Entries</label>
+				<description>`action="delete"` - Delete entries from a ZIP or JAR archive</description>
+				<attributes>file,entryPath,filter,filterDelimiters,recurse,password</attributes>
+			</group>
+		</attribute-groups>
+		-->
 		<attribute>
 			<type>string</type>
 			<name>action</name>
@@ -208,7 +249,7 @@
 		<name>compressionMethod</name>
 		<required>false</required>
 		<rtexprvalue>true</rtexprvalue>
-		<description>Set the zip compression level, default is deflate(deflateNormal),deflateFast,deflateFastest,deflateMaximum,deflateUtra,aesenc,store</description>
+		<description>Set the zip compression level, default is deflate(deflateNormal),deflateFast,deflateFastest,deflateMaximum,deflateUtra,store</description>
     	</attribute>
 	</tag>
 	
@@ -216,7 +257,8 @@
 	<!-- ZipParam -->
 	<tag>
 		<name>ZipParam</name>
-		<tag-class bundle-name="{bundle-name}" bundle-version="{bundle-version}">org.lucee.extension.zip.tag.ZipParam</tag-class>
+		<tag-class bundle-name="{bundle-name}" bundle-version="{bundle-version}">org.lucee.extension.zip.tag.jakarta.ZipParam</tag-class>
+		<javax-tag-class bundle-name="{bundle-name}" bundle-version="{bundle-version}">org.lucee.extension.zip.tag.javax.ZipParam</javax-tag-class>
 		<body-content>empty</body-content>
 		<body-rtexprvalue>false</body-rtexprvalue>
 		<script>
@@ -320,10 +362,4 @@
 			<description>Supported algorithms are aes(=aes256), aes128 and standard</description>
     	</attribute>
 	</tag>
-
-
-
-
-
-
 </taglib>
