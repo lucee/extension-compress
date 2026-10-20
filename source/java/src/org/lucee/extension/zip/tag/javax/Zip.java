@@ -794,9 +794,15 @@ public final class Zip extends BodyTagImpl {
 			add(zip, res.getInputStream(), entryPath, lastMod, true, null);
 			return;
 		}
-		zip.addFile((File) res, createParam(entryPath, null));
-		elements++;
-		alreadyUsed.add(entryPath);
+		try {
+			zip.addFile(f, createParam(entryPath, null));
+			elements++;
+			alreadyUsed.add(entryPath);
+		}
+		catch (Exception e) {
+			// LDEV-2890 resource is not a local file (i.e. ram://), fall back to stream
+			add(zip, res.getInputStream(), entryPath, lastMod, true, null);
+		}
 	}
 
 	private String[] splitPathX(String path) {
