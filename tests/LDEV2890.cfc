@@ -1,4 +1,4 @@
-component extends="org.lucee.cfml.test.LuceeTestCase" labels="zip" {
+component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress" {
 
 	function testAddNonFileSystemResourceToZip() {
 		var sampleFilename = "test_LDEV-2890.txt";
