@@ -113,24 +113,24 @@ jobs:
           echo "NEXT_VERSION=${NEXT_VERSION}" >> "$GITHUB_OUTPUT"
 
       # Repository and organization variables are not passed to pull_request runs from forks, so
-      # vars.LUCEE_TEST_VERSIONS_JAKARTA is empty there and fromJSON('') fails the whole run before build-and-test starts.
+      # vars.LUCEE_TEST_VERSIONS_7 is empty there and fromJSON('') fails the whole run before build-and-test starts.
       # Use the variable when it is set, otherwise test the latest build of each Lucee line through
       # a version query (script-runner resolves it), so fork PRs are tested too.
       - name: Resolve Lucee test matrix
         id: lucee-matrix
         env:
-          TEST_VERSIONS: ${{ vars.LUCEE_TEST_VERSIONS_JAKARTA }}
-          # this extension is the Jakarta build, tested on Lucee 7.0 or newer
-          FALLBACK_LINES: "7.0 7.1 8.0"
+          TEST_VERSIONS: ${{ vars.LUCEE_TEST_VERSIONS_7 }}
+          # this extension needs Lucee 7.1.0.204 or newer (luceeCoreVersion in pom.xml)
+          FALLBACK_LINES: "7.1 8.0"
           # Lucee 8.0 requires this extension, so it is always tested, even when the variable has no 8.0 entry
           REQUIRED_LINES: "8.0"
         run: |
           set -euo pipefail
           if [[ -n "${TEST_VERSIONS// }" ]] && echo "$TEST_VERSIONS" | jq -e 'type == "array" and length > 0' > /dev/null; then
-            echo "Using vars.LUCEE_TEST_VERSIONS_JAKARTA"
+            echo "Using vars.LUCEE_TEST_VERSIONS_7"
             MATRIX=$(echo "$TEST_VERSIONS" | jq -c '.')
           else
-            echo "::notice::vars.LUCEE_TEST_VERSIONS_JAKARTA is not available (fork pull request?), testing the latest build of: ${FALLBACK_LINES}"
+            echo "::notice::vars.LUCEE_TEST_VERSIONS_7 is not available (fork pull request?), testing the latest build of: ${FALLBACK_LINES}"
             MATRIX=$(printf '%s\n' $FALLBACK_LINES | jq -R -s -c 'split("\n") | map(select(length > 0)) | map({version: (. + "/all/light"), query: (. + "/all/light")})')
           fi
           for LINE in $REQUIRED_LINES; do
@@ -139,6 +139,25 @@ jobs:
               MATRIX=$(echo "$MATRIX" | jq -c --arg l "$LINE" '. + [{version: ($l + "/all/light"), query: ($l + "/all/light")}]')
             fi
           done
+          # also test the oldest supported core, luceeCoreVersion from pom.xml (Lucee jar from the CDN)
+          MIN_VERSION=$(mvn -B help:evaluate -Dexpression=luceeCoreVersion -q -DforceStdout | tr -d '\r')
+          if ! [[ "$MIN_VERSION" =~ ^[0-9]+(\.[0-9]+){3}(-[A-Z]+)?$ ]]; then
+            echo "::error::[${MIN_VERSION}] is not a valid luceeCoreVersion"
+            exit 1
+          fi
+          # drop entries older than luceeCoreVersion: a version is compared in full, a line (7.0/...) by major.minor
+          MATRIX=$(echo "$MATRIX" | jq -c --arg min "${MIN_VERSION%%-*}" '
+            def nums: [scan("[0-9]+") | tonumber];
+            ($min | nums) as $m
+            | map(select(
+                ([(.version // ""), (.query // "")] | map([match("[0-9]+(\\.[0-9]+){1,3}").string]) | add | first // "") as $v
+                | if $v == "" then true
+                  else ($v | nums) as $n | if ($n | length) < 4 then $n >= $m[0:($n | length)] else $n >= $m end
+                  end))')
+          if ! echo "$MATRIX" | jq -e --arg v "$MIN_VERSION" 'any(.[]; (.version // "") | endswith($v))' > /dev/null; then
+            echo "Adding the minimum supported version ${MIN_VERSION} to the matrix"
+            MATRIX=$(echo "$MATRIX" | jq -c --arg v "light-$MIN_VERSION" '. + [{version: $v, query: ""}]')
+          fi
           # artifact names cannot contain "/", so give every entry a label.
           # testRef is the lucee/lucee branch of the same line (6.2, 7.1, ...), so each core runs the test suite
           # written for it; tests for core fixes on newer lines would otherwise fail on older cores.
@@ -200,7 +219,7 @@ jobs:
         timeout-minutes: 15
         run: |
           echo "------- Maven Install -------";
-          mvn -B -e -f pom.xml clean install
+          mvn -B -e -f pom.xml clean install -Dgoal=install
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -215,6 +234,7 @@ jobs:
         with:
           repository: lucee/lucee
           path: lucee
+          ref: ${{ matrix.lucee.testRef }}
 
       - name: Prepare extension dir for tests
         run: rm -f target/*.lite.lex
@@ -308,14 +328,14 @@ jobs:
           set -euo pipefail
           if [[ "$VERSION" == *-SNAPSHOT ]]; then
             echo "------- Maven Deploy snapshot ${VERSION} on ${{ github.event_name }} -------";
-            mvn -B -e -f pom.xml clean deploy --settings maven-settings.xml
+            mvn -B -e -f pom.xml clean deploy -Dgoal=deploy --settings maven-settings.xml
           elif [[ "$VERSION" =~ -(RC|BETA|ALPHA)$ ]]; then
             # pre-releases are not published to Maven Central, only to S3 (s3 job below)
             echo "------- Maven Install (signed) ${VERSION} on ${{ github.event_name }}, S3 only -------";
-            mvn -B -e -f pom.xml clean install -DperformRelease=true --settings maven-settings.xml
+            mvn -B -e -f pom.xml clean install -Dgoal=install -DperformRelease=true --settings maven-settings.xml
           else
             echo "------- Maven Deploy release ${VERSION} on ${{ github.event_name }} -------";
-            mvn -B -e -f pom.xml clean deploy -DperformRelease=true --settings maven-settings.xml
+            mvn -B -e -f pom.xml clean deploy -Dgoal=deploy -DperformRelease=true --settings maven-settings.xml
           fi
 
       # everything the S3 upload needs (LDEV-6568): full and lite .lex plus the flattened POM

@@ -12,17 +12,24 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress"{
 				expect( structKeyExists(data,"name") ).toBeTrue();
 			});
 			it( title='load zip class', body=function( currentSpec ) {
+				// the classes come from the Maven artifact org.lucee:compress of the installed extension
+				var maven = [ "org.lucee:compress:" & getInstalledVersion() ];
 				// is jakarta environment 
-				if( isInstanceOf(getPageContext().getHTTPServletRequest(),"jakarta.servlet.http.HttpServletRequest") ) {
-					java=createObject("java", "org.lucee.extension.zip.tag.jakarta.Zip","org.lucee.compress.extension");
-				}
-				else {
-					java=createObject("java", "org.lucee.extension.zip.tag.javax.Zip","org.lucee.compress.extension");
-				}
+				var className = isInstanceOf(getPageContext().getHTTPServletRequest(),"jakarta.servlet.http.HttpServletRequest")
+					? "org.lucee.extension.zip.tag.jakarta.Zip"
+					: "org.lucee.extension.zip.tag.javax.Zip";
+				var java=createObject("java", className, { maven: maven });
+				expect( isObject( java ) ).toBeTrue();
 			});
 			
 		});
 	}
 
-
+	private function getInstalledVersion() {
+		var ext = extensionList().filter( function( row ) {
+			return row.id == "8D7FB0DF-08BB-1589-FE3975678F07DB17";
+		});
+		expect( ext.recordCount ).toBe( 1, "compress extension is not installed" );
+		return ext.version;
+	}
 } 

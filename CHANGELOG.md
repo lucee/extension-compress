@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.0.0-SNAPSHOT
+
+- [LDEV-6719](https://luceeserver.atlassian.net/browse/LDEV-6719) — load the Java libraries via Maven instead of OSGi bundles, commons-compress 1.26.1 now gets the commons-io 2.12+ it needs; requires Lucee 7.1.0.204 or newer (use 2.1.x for older Lucee versions)
+
 ## 2.1.0.2-SNAPSHOT
 
 - [LDEV-6120](https://luceeserver.atlassian.net/browse/LDEV-6120) — add javax and jakarta tags, so the extension can be run in Lucee 6 and 7

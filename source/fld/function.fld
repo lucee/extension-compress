@@ -13,7 +13,7 @@
 	<!-- compress -->
 	<function>
 		<name>compress</name>
-		<class bundle-name="{bundle-name}" bundle-version="{bundle-version}">org.lucee.extension.compress.function.Compress</class>
+		<class maven="{maven}">org.lucee.extension.compress.function.Compress</class>
 		<description>Compress given source to different formats.</description>
 		<argument>
 			<name>format</name>
@@ -75,7 +75,7 @@
 	<!-- extract -->
 	<function>
 		<name>extract</name>
-		<class bundle-name="{bundle-name}" bundle-version="{bundle-version}">org.lucee.extension.compress.function.Extract</class>
+		<class maven="{maven}">org.lucee.extension.compress.function.Extract</class>
 		<description>Extract the data of a compressed file</description>
 		<argument>
 			<name>format</name>
