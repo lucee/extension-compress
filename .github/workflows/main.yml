@@ -161,7 +161,7 @@ jobs:
           # artifact names cannot contain "/", so give every entry a label.
           # testRef is the lucee/lucee branch of the same line (6.2, 7.1, ...), so each core runs the test suite
           # written for it; tests for core fixes on newer lines would otherwise fail on older cores.
-          MATRIX=$(echo "$MATRIX" | jq -c 'map(. + {label: ((.version // .query) | gsub("[^A-Za-z0-9._-]"; "-")), testRef: (((.query // .version) | capture("(?<l>[0-9]+\\.[0-9]+)").l) // "")})')
+          MATRIX=$(echo "$MATRIX" | jq -c 'map(. + {label: ((.version // .query) | gsub("[^A-Za-z0-9._-]"; "-")), testRef: ((([.query, .version] | map(select(. != null and . != "")) | first // "") | capture("(?<l>[0-9]+\\.[0-9]+)").l) // "")})')
           echo "Lucee test matrix: ${MATRIX}"
           echo "MATRIX=${MATRIX}" >> "$GITHUB_OUTPUT"
 
