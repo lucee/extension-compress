@@ -2,6 +2,7 @@
 
 ## 2.2.0.0-SNAPSHOT
 
+- [LDEV-1566](https://luceeserver.atlassian.net/browse/LDEV-1566) — `cfzip action="list"` accepts `returntype="query|array|struct"` and `columnKey` (struct needs `columnKey` when more than one row is returned)
 - [LDEV-6719](https://luceeserver.atlassian.net/browse/LDEV-6719) — load the Java libraries via Maven instead of OSGi bundles, commons-compress 1.26.1 now gets the commons-io 2.12+ it needs; requires Lucee 7.1.0.204 or newer (use 2.1.x for older Lucee versions)
 
 ## 2.1.0.2-SNAPSHOT
