@@ -44,6 +44,28 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress" {
 				}).toThrow();
 			});
 
+			it( "LDEV-1567 columnKey with a list of columns creates nested structs", function() {
+				cfzip( action="list", file=variables.zipFile, name="local.res", returntype="struct", columnKey="type,name" );
+				expect( isStruct( local.res ) ).toBeTrue();
+				var outer = structKeyArray( local.res );
+				expect( arrayLen( outer ) ).toBe( 1 );
+				expect( isStruct( local.res[ outer[ 1 ] ] ) ).toBeTrue();
+				expect( structCount( local.res[ outer[ 1 ] ] ) ).toBe( 2 );
+				expect( local.res[ outer[ 1 ] ][ "a.txt" ].name ).toBe( "a.txt" );
+				expect( local.res[ outer[ 1 ] ][ "b.txt" ].name ).toBe( "b.txt" );
+			});
+
+			it( "LDEV-1567 the last row wins if a key is used more than once", function() {
+				cfzip( action="list", file=variables.zipFile, name="local.res", returntype="struct", columnKey="type" );
+				expect( structCount( local.res ) ).toBe( 1 );
+			});
+
+			it( "LDEV-1567 a missing column in columnKey throws", function() {
+				expect( function() {
+					cfzip( action="list", file=variables.zipFile, name="local.res", returntype="struct", columnKey="type,nope" );
+				}).toThrow();
+			});
+
 			it( "invalid returntype throws", function() {
 				expect( function() {
 					cfzip( action="list", file=variables.zipFile, name="local.res", returntype="xml" );
