@@ -672,6 +672,31 @@ public final class Zip extends BodyTagImpl {
 	}
 
 	private void actionZip(ZipFile zip, ZipParamContent zpc) throws PageException, IOException, ZipException {
+		// LDEV-4142 a password / encryptionalgorithm of the cfzipparam applies to the entries of this param
+		String pwd = zpc.getPassword();
+		if (Util.isEmpty(pwd)) {
+			_actionZip(zip, zpc);
+			return;
+		}
+		String oldPassword = password;
+		EncryptionMethod oldEncryption = encryption;
+		AesKeyStrength oldAes = aes;
+		try {
+			password = pwd;
+			encryption = EncryptionMethod.NONE;
+			if (!Util.isEmpty(zpc.getEncryption())) setEncryptionalgorithm(zpc.getEncryption());
+			zip.setPassword(pwd.toCharArray());
+			_actionZip(zip, zpc);
+		}
+		finally {
+			password = oldPassword;
+			encryption = oldEncryption;
+			aes = oldAes;
+			zip.setPassword(Util.isEmpty(oldPassword) ? null : oldPassword.toCharArray());
+		}
+	}
+
+	private void _actionZip(ZipFile zip, ZipParamContent zpc) throws PageException, IOException, ZipException {
 		Object content = zpc.getContent();
 		if (engine.getDecisionUtil().isBinary(content)) {
 			add(zip, new ByteArrayInputStream(engine.getCastUtil().toBinary(content)), zpc.getEntryPath(), System.currentTimeMillis(), true, null);
@@ -685,6 +710,31 @@ public final class Zip extends BodyTagImpl {
 	}
 
 	private void actionZip(ZipFile zip, ZipParamSource zps) throws IOException, ZipException, PageException {
+		// LDEV-4142 a password / encryptionalgorithm of the cfzipparam applies to the entries of this param
+		String pwd = zps.getPassword();
+		if (Util.isEmpty(pwd)) {
+			_actionZip(zip, zps);
+			return;
+		}
+		String oldPassword = password;
+		EncryptionMethod oldEncryption = encryption;
+		AesKeyStrength oldAes = aes;
+		try {
+			password = pwd;
+			encryption = EncryptionMethod.NONE;
+			if (!Util.isEmpty(zps.getEncryption())) setEncryptionalgorithm(zps.getEncryption());
+			zip.setPassword(pwd.toCharArray());
+			_actionZip(zip, zps);
+		}
+		finally {
+			password = oldPassword;
+			encryption = oldEncryption;
+			aes = oldAes;
+			zip.setPassword(Util.isEmpty(oldPassword) ? null : oldPassword.toCharArray());
+		}
+	}
+
+	private void _actionZip(ZipFile zip, ZipParamSource zps) throws IOException, ZipException, PageException {
 		// prefix
 		String prefix = zps.getPrefix();
 		if (Util.isEmpty(prefix)) prefix = this.prefix;
