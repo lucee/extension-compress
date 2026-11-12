@@ -148,7 +148,7 @@ public final class ZipParam extends TagImpl {
 			notAllowed("source", "charset", charset);
 			notAllowed("source", "content", content);
 
-			getZip().setParam(new ZipParamSource(source, entryPath, filter, prefix, recurse()));
+			getZip().setParam(new ZipParamSource(source, entryPath, filter, prefix, recurse(), password, encryption));
 		}
 		else if (content != null) {
 			required("content", "entrypath", entryPath);
@@ -157,7 +157,7 @@ public final class ZipParam extends TagImpl {
 			notAllowed("content,entrypath", "source", source);
 			notAllowed("content,entrypath", "recurse", recurse);
 
-			getZip().setParam(new ZipParamContent(content, entryPath, charset));
+			getZip().setParam(new ZipParamContent(content, entryPath, charset, password, encryption));
 		}
 		else if (filter != null) {
 			notAllowed("filter", "charset", charset);
@@ -165,6 +165,11 @@ public final class ZipParam extends TagImpl {
 			notAllowed("filter", "prefix", prefix);
 			notAllowed("filter", "source", source);
 			getZip()._setFilter(filter);
+			// LDEV-4142 password / encryptionalgorithm were ignored in combination with filter / entrypath
+			if (!Util.isEmpty(password)) {
+				getZip().setPassword(password);
+				if (!Util.isEmpty(encryption)) getZip().setEncryptionalgorithm(encryption);
+			}
 
 		}
 		else if (entryPath != null) {
@@ -173,6 +178,11 @@ public final class ZipParam extends TagImpl {
 			notAllowed("entryPath", "prefix", prefix);
 			notAllowed("entryPath", "source", source);
 			getZip().setEntrypath(entryPath);
+			// LDEV-4142 password / encryptionalgorithm were ignored in combination with filter / entrypath
+			if (!Util.isEmpty(password)) {
+				getZip().setPassword(password);
+				if (!Util.isEmpty(encryption)) getZip().setEncryptionalgorithm(encryption);
+			}
 		}
 		else if (!Util.isEmpty(password)) {
 			notAllowed("entryPath", "charset", charset);
