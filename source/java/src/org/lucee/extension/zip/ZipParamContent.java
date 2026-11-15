@@ -51,4 +51,24 @@ public class ZipParamContent implements ZipParamAbstr {
 		return charset;
 	}
 
+
+	private String password;
+	private String encryption;
+
+	/**
+	 * LDEV-4142 password and encryption algorithm of the cfzipparam, used for the entries of this param
+	 */
+	public ZipParamContent(Object content, String entryPath, String charset, String password, String encryption) {
+		this(content, entryPath, charset);
+		this.password = password;
+		this.encryption = encryption;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public String getEncryption() {
+		return encryption;
+	}
 }

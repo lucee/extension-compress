@@ -73,4 +73,24 @@ public class ZipParamSource implements ZipParamAbstr {
 		return recurse;
 	}
 
+
+	private String password;
+	private String encryption;
+
+	/**
+	 * LDEV-4142 password and encryption algorithm of the cfzipparam, used for the entries of this param
+	 */
+	public ZipParamSource(Resource source, String entryPath, ResourceFilter filter, String prefix, boolean recurse, String password, String encryption) {
+		this(source, entryPath, filter, prefix, recurse);
+		this.password = password;
+		this.encryption = encryption;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public String getEncryption() {
+		return encryption;
+	}
 }
