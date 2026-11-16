@@ -47,6 +47,7 @@ import lucee.commons.io.res.ResourceProvider;
 import lucee.commons.io.res.filter.ResourceFilter;
 import lucee.loader.util.Util;
 import lucee.runtime.exp.PageException;
+import org.lucee.extension.zip.QueryReturnType;
 import lucee.runtime.type.Collection.Key;
 import lucee.runtime.type.UDF;
 import lucee.runtime.util.Creation;
@@ -73,6 +74,8 @@ public final class Zip extends BodyTagImpl {
 	private String pattern;
 	private String patternDelimiters;
 	private String name;
+	private int returnType = QueryReturnType.QUERY;
+	private String columnKey;
 	private boolean overwrite;
 	private String prefix;
 	private String password;
@@ -109,6 +112,8 @@ public final class Zip extends BodyTagImpl {
 		source = null;
 		storePath = true;
 		variable = null;
+		returnType = QueryReturnType.QUERY;
+		columnKey = null;
 		pattern = null;
 		patternDelimiters = null;
 		password = null;
@@ -204,7 +209,24 @@ public final class Zip extends BodyTagImpl {
 	}
 
 	/**
-	 * @param name the name to set
+	 * @param returntype
+	 *            how the result of action list is returned: query (default), array or struct
+	 */
+	public void setReturntype(String returntype) throws PageException {
+		this.returnType = QueryReturnType.parse(returntype, "zip");
+	}
+
+	/**
+	 * @param columnKey
+	 *            the column whose value is used as key when returntype is struct (action list)
+	 */
+	public void setColumnkey(String columnKey) {
+		this.columnKey = columnKey;
+	}
+
+	/**
+	 * @param name
+	 *            The name to set.
 	 */
 	public void setName(String name) {
 		this.name = name;
@@ -449,6 +471,7 @@ public final class Zip extends BodyTagImpl {
 		finally {
 			// Util.closeEL(zip);
 		}
+		if (returnType != QueryReturnType.QUERY) pageContext.setVariable(name, QueryReturnType.convert(query, returnType, columnKey));
 	}
 
 	private boolean entryPathMatch(String dir) {
