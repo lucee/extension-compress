@@ -111,11 +111,18 @@ component extends="org.lucee.cfml.test.LuceeTestCase" labels="compress" {
 				zipparam entrypath="../../invalidpath.txt" content="test an invalid path";
 			}
 
-			// unzip the created zip
-			zip action="unzip" file="#trg#test.zip" destination=trg2;
-
-			// is the file in the right place
-			assertTrue(fileExists("#trg2#invalidpath.txt"));
+			// unzip the created zip; an entry name that resolves outside the
+			// destination is refused, and the file is not written there or above it
+			var failed = false;
+			try {
+				zip action="unzip" file="#trg#test.zip" destination=trg2;
+			}
+			catch (any e) {
+				failed = true;
+				assertTrue(findNoCase("outside the target directory", e.message & e.detail) GT 0);
+			}
+			assertTrue(failed);
+			assertFalse(fileExists("#trg2#invalidpath.txt"));
 			assertFalse(fileExists("#trg#invalidpath.txt"));
 		}
 		finally {
