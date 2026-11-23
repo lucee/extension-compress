@@ -25,6 +25,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -228,9 +229,12 @@ public final class CompressUtil {
 			tis = new TarArchiveInputStream(util.toBufferedInputStream(tarFile.getInputStream()));
 			TarArchiveEntry entry;
 			int mode;
+			String targetPrefix = ZipUtil.canonicalDirPrefix(targetDir);
+			int entryCount = 0;
+			long byteCount = 0;
 			while ((entry = tis.getNextTarEntry()) != null) {
-				// print.ln(entry);
-				Resource target = targetDir.getRealResource(entry.getName());
+				checkExtractLimits(++entryCount, byteCount);
+				Resource target = ZipUtil.toResource(targetDir, targetPrefix, entry.getName());
 				if (entry.isDirectory()) {
 					target.mkdirs();
 				}
@@ -238,11 +242,13 @@ public final class CompressUtil {
 					Resource parent = target.getParentResource();
 					if (!parent.exists()) parent.mkdirs();
 					util.copy(tis, target, false);
+					if (target.exists()) byteCount += target.length();
+					checkExtractLimits(entryCount, byteCount);
 				}
 				target.setLastModified(entry.getModTime().getTime());
 				mode = entry.getMode();
 				if (mode > 0) {
-					target.setMode(ModeUtil.extractPermissions(mode, false));
+					target.setMode(ModeUtil.extractPermissions(mode, false) & 0777);
 				}
 			}
 		}
@@ -286,13 +292,18 @@ public final class CompressUtil {
 		 */
 
 		IO util = CFMLEngineFactory.getInstance().getIOUtil();
+		Charset charset = ZipUtil.charsetForZip(zipFile);
+		String targetPrefix = ZipUtil.canonicalDirPrefix(targetDir);
 
 		ZipInputStream zis = null;
 		try {
-			zis = new ZipInputStream(util.toBufferedInputStream(zipFile.getInputStream()));
+			zis = new ZipInputStream(util.toBufferedInputStream(zipFile.getInputStream()), charset);
 			ZipEntry entry;
+			int entryCount = 0;
+			long byteCount = 0;
 			while ((entry = zis.getNextEntry()) != null) {
-				Resource target = ZipUtil.toResource(targetDir, entry);
+				checkExtractLimits(++entryCount, byteCount);
+				Resource target = ZipUtil.toResource(targetDir, targetPrefix, entry.getName());
 				if (entry.isDirectory()) {
 					target.mkdirs();
 				}
@@ -300,6 +311,8 @@ public final class CompressUtil {
 					Resource parent = target.getParentResource();
 					if (!parent.exists()) parent.mkdirs();
 					if (!target.exists()) util.copy(zis, target, false);
+					if (target.exists()) byteCount += target.length();
+					checkExtractLimits(entryCount, byteCount);
 				}
 				target.setLastModified(entry.getTime());
 				zis.closeEntry();
@@ -307,6 +320,30 @@ public final class CompressUtil {
 		}
 		finally {
 			util.closeSilent(zis);
+		}
+	}
+
+	/**
+	 * Optional extract caps, off by default. Set {@code lucee.compress.extract.maxEntries} or
+	 * {@code lucee.compress.extract.maxBytes} (system property or env var with dots turned into
+	 * underscores) to a positive number to enable.
+	 */
+	private static void checkExtractLimits(int entries, long bytes) throws IOException {
+		long maxEntries = extractLimit("lucee.compress.extract.maxEntries");
+		long maxBytes = extractLimit("lucee.compress.extract.maxBytes");
+		if (maxEntries > 0 && entries > maxEntries) throw new IOException("archive extract exceeds max entries [" + maxEntries + "]");
+		if (maxBytes > 0 && bytes > maxBytes) throw new IOException("archive extract exceeds max bytes [" + maxBytes + "]");
+	}
+
+	private static long extractLimit(String key) {
+		String v = System.getProperty(key);
+		if (v == null || v.isEmpty()) v = System.getenv(key.toUpperCase().replace('.', '_'));
+		if (v == null || v.isEmpty()) return 0;
+		try {
+			return Long.parseLong(v.trim());
+		}
+		catch (NumberFormatException e) {
+			return 0;
 		}
 	}
 
@@ -631,7 +668,7 @@ public final class CompressUtil {
 			for (Resource r: sources) {
 
 				try {
-					zis = new ZipInputStream(util.toBufferedInputStream(r.getInputStream()));
+					zis = new ZipInputStream(util.toBufferedInputStream(r.getInputStream()), ZipUtil.charsetForZip(r));
 					while ((entry = zis.getNextEntry()) != null) {
 						if (!done.contains(entry.getName())) {
 							zos.putNextEntry(entry);
