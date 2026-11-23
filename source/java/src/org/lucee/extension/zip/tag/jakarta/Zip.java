@@ -966,6 +966,9 @@ public final class Zip extends BodyTagImpl {
 
 	private ZipFile getZip(Resource file, String password) throws IOException, ZipException, PageException {
 		ZipFile zf = new ZipFile(engine.getCastUtil().toFile(file));
+		if (file != null && file.length() > 0) {
+			zf.setCharset(ZipUtil.charsetForZip(file));
+		}
 		if (!Util.isEmpty(password) && (file.length() == 0 || zf.isEncrypted())) {
 			zf.setPassword(password.toCharArray());
 		}
